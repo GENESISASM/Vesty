@@ -1,4 +1,4 @@
-# Vesty 💰📦
+# Vesty
 
 > **EN:** A full-stack web application for simple joint financial recording and stock management.
 >
@@ -6,27 +6,27 @@
 
 ---
 
-## ✨ Features / Fitur
+## Features
 
-### 💰 Finance Management
+### Finance Management
 - **EN:** Record income & expenses with categories, descriptions, and dates
 - **ID:** Catat pemasukan & pengeluaran dengan kategori, deskripsi, dan tanggal
 
-### 📦 Stock Management
+### Stock Management
 - **EN:** Add items, record stock in/out movements, and view full history
 - **ID:** Tambah barang, catat stok masuk/keluar, dan lihat riwayat lengkap
 
-### 📊 Dashboard Overview
+### Dashboard Overview
 - **EN:** Real-time financial summary — total income, expenses, and balance
 - **ID:** Ringkasan keuangan real-time — total pemasukan, pengeluaran, dan saldo
 
-### 🔐 Authentication
+### Authentication
 - **EN:** Secure login with JWT — each user only sees their own data
 - **ID:** Login aman dengan JWT — setiap user hanya bisa lihat data miliknya
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
@@ -49,7 +49,7 @@
 
 ---
 
-## 🏗️ Project Structure / Struktur Project
+## Project Structure
 
 ```
 Vesty/
@@ -73,7 +73,7 @@ Vesty/
 
 ---
 
-## 🚀 Getting Started / Cara Menjalankan Lokal
+## Getting Started
 
 ### Prerequisites
 - Node.js v18+
@@ -116,9 +116,5 @@ Frontend akan berjalan di `http://localhost:3000`
 
 **Muhamad Saiful Arif**
 - GitHub: [@GENESISASM](https://github.com/GENESISASM)
-
----
-
-## 📄 License
-
-This project is for personal and portfolio use.
+- LinkedIn: [muhamad-saiful-arif](https://www.linkedin.com/in/muhamad-saiful-arif-8529432a2/)
+- This project is for personal and portfolio use.
