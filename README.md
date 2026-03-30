@@ -95,7 +95,7 @@ npx prisma migrate dev
 npm run dev
 ```
 
-> ⚠️ Buat file `.env` di folder `Vesty_BE` — lihat `.env.example` untuk referensi variabel yang dibutuhkan.
+> Buat file `.env` di folder `Vesty_BE` — lihat `.env.example` untuk referensi variabel yang dibutuhkan.
 
 Backend akan berjalan di `http://localhost:5000`
 
@@ -106,13 +106,13 @@ npm install
 npm run dev
 ```
 
-> ⚠️ Buat file `.env.local` di folder `vesty_fe` — lihat `.env.example` untuk referensi variabel yang dibutuhkan.
+> Buat file `.env.local` di folder `vesty_fe` — lihat `.env.example` untuk referensi variabel yang dibutuhkan.
 
 Frontend akan berjalan di `http://localhost:3000`
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Muhamad Saiful Arif**
 - GitHub: [@GENESISASM](https://github.com/GENESISASM)
