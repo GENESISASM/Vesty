@@ -1,6 +1,6 @@
 # Vesty 💰📦
 
-> **EN:** A fullstack web application for managing shared finances and item stock — built for couples.
+> **EN:** A fullstack web application for managing shared finances and item stock.
 >
 > **ID:** Aplikasi web fullstack untuk mencatat keuangan bersama dan manajemen stok barang secara sederhana.
 
