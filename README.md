@@ -116,8 +116,8 @@ Frontend akan berjalan di `http://localhost:3000`
 
 **Muhamad Saiful Arif**
 
-[![GitHub](https://img.shields.io/badge/GitHub-GENESISASM-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GENESISASM)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Muhamad_Saiful_Arif-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/muhamad-saiful-arif-8529432a2/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GENESISASM)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/muhamad-saiful-arif-8529432a2/)
 
 > This project is for personal and portfolio use.
-> > Built to learn, designed to use.
+> Built to learn, designed to use.
