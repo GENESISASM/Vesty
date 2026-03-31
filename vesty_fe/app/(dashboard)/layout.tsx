@@ -22,12 +22,6 @@ export default function DashboardLayout({
         }
     }, [user, isLoading]);
 
-    const getLinkStyle = (path: string) => {
-        return pathname == path 
-            ? "text-white font-medium" 
-            : "text-gray-400 hover:text-white transition";
-    }
-
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -35,6 +29,12 @@ export default function DashboardLayout({
             </div>
         )
     }
+
+    const navLinks = [
+        { href: '/dashboard', label: 'Dashboard' },
+        { href: '/dashboard/finance', label: 'Finance' },
+        { href: '/dashboard/stock', label:'Stock' }
+    ];
 
     return (
         <div className="min-h-screen bg-gray-950">
@@ -53,19 +53,28 @@ export default function DashboardLayout({
                         </div>
                         <h1 className="text-white font-bold text-xl tracking-tight">Vesty</h1>
                     </Link>
-                    <div className="flex items-center gap-6">
-                        <a href="/dashboard" className="text-gray-400 hover:text-white text-sm transition">
-                            Dashboard
-                        </a>
-                        <a href="/dashboard/finance" className="text-gray-400 hover:text-white text-sm transition">
-                            Finance
-                        </a>
-                        <a href="/dashboard/stock" className="text-gray-400 hover:text-white text-sm transition">
-                            Stock
-                        </a>
+
+                    {/* Nav Links */}
+                    <div className="flex items-center gap-1">
+                        {navLinks.map(({ href, label }) => {
+                        const isActive = pathname == href;
+                        return (
+                            <Link
+                                key={href}
+                                href={href}
+                                className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                                    isActive
+                                    ? 'bg-gray-800 text-white font-medium'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                                }`}
+                            >
+                                {label}
+                            </Link>
+                        );
+                        })}
                         <button
                             onClick={() => { logout(); router.push('/login'); }}
-                            className="text-gray-400 hover:text-red-400 transition"
+                            className="ml-3 text-gray-400 hover:text-red-400 transition p-1.5 rounded-lg hover:bg-gray-800/50"
                             title="Logout"
                         >
                             <LogOut size={18} />

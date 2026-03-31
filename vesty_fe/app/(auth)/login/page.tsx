@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth_context';
 import axiosInstance from '@/lib/axios';
 import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 const loginSchema = z.object({
     email: z.string().email('Invalid email format'),
@@ -66,6 +67,15 @@ export default function LoginPage() {
                 <div className="w-full max-w-md">
                     {/* Logo & Title */}
                     <div className="text-center mb-8">
+                        <div className="relative w-26 h-26 mb-2 mx-auto transition-transform hover:rotate-6 duration-300">
+                            <Image 
+                                src="/image/VestyLogo.svg" 
+                                alt="Vesty Logo"
+                                fill
+                                className="object-contain"
+                                priority
+                            />
+                        </div>
                         <h1 className="text-4xl font-bold text-white mb-2">Vesty</h1>
                         <p className="text-gray-400 text-sm">
                             Manage your finances & stock together
