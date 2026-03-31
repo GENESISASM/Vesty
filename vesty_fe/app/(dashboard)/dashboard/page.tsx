@@ -113,7 +113,7 @@ export default function DashboardPage() {
                 }
             });
 
-            return Object.values(months).sort((a, b) => a.date.localeCompare(b.date));
+            return Object.keys(months).sort().map(key => months[key]);
         } else {
             const years: { [key: string]: { date: string; income: number; expense: number } } = {};
 
@@ -129,7 +129,7 @@ export default function DashboardPage() {
                     years[key].expense += Number(f.amount)
                 }
             })
-            return Object.values(years).sort((a, b) => a.date.localeCompare(b.date));
+            return Object.keys(years).sort().map(key => years[key]);
         }
     };
 

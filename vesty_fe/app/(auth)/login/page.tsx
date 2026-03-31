@@ -58,7 +58,7 @@ export default function LoginPage() {
             {isRedirecting && (
             <div className="fixed inset-0 bg-gray-950 flex flex-col items-center justify-center z-50">
                 <Loader2 size={32} className="animate-spin text-blue-500 mb-3" />
-                <p className="text-gray-400 text-sm">Taking you to dashboard...</p>
+                <p className="text-gray-400 text-sm">Loading...</p>
             </div>
             )}
 
