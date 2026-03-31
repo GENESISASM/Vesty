@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/context/auth_context';
-import { useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import axiosInstance from '@/lib/axios';
 import { Finance, FinanceSummary } from '@/lib/types';
 import {
@@ -24,6 +24,10 @@ export default function DashboardPage() {
     const [finances, setFinances] = useState<Finance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState<FilterType>('monthly');
+    const filterRef = useRef<HTMLDivElement>(null);
+    const sliderRef = useRef<HTMLDivElement>(null);
+    const filters: FilterType[] = ['7days', 'monthly', 'yearly'];
+    const filterLabels = { '7days': '7 D', monthly: 'Monthly', yearly: 'Year' };
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -44,6 +48,17 @@ export default function DashboardPage() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    useEffect(() => {
+        if (!filterRef.current || !sliderRef.current) return;
+        const buttons = filterRef.current.querySelectorAll('button');
+        const activeIndex = filters.indexOf(filter);
+        const activeBtn = buttons[activeIndex] as HTMLButtonElement;
+        if (activeBtn) {
+            sliderRef.current.style.width = `${activeBtn.offsetWidth}px`;
+            sliderRef.current.style.left = `${activeBtn.offsetLeft}px`;
+        }
+    }, [filter]);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -160,7 +175,7 @@ export default function DashboardPage() {
                     className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition border border-gray-700 disabled:opacity-50"
                 >
                     <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-                    Refresh Data
+                    Refresh
                 </button>
             </div>
 
@@ -203,37 +218,24 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-white font-semibold">Income vs Expense</h3>
                     {/* Filter Toggle */}
-                    <div className="flex bg-gray-800 rounded-lg p-1 gap-1">
-                        <button
-                            onClick={() => setFilter('7days')}
-                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
-                                filter == '7days'
-                                ? 'bg-gray-600 text-white'
-                                : 'text-gray-400 hover:text-white'
-                            }`}
-                        >
-                            7 Days
-                        </button>
-                        <button
-                            onClick={() => setFilter('monthly')}
-                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
-                                filter == 'monthly'
-                                ? 'bg-gray-600 text-white'
-                                : 'text-gray-400 hover:text-white'
-                            }`}
-                        >
-                            Monthly
-                        </button>
-                        <button
-                            onClick={() => setFilter('yearly')}
-                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
-                                filter == 'yearly'
-                                ? 'bg-gray-600 text-white'
-                                : 'text-gray-400 hover:text-white'
-                            }`}
-                        >
-                            Yearly
-                        </button>
+                    <div ref={filterRef} className="relative flex bg-gray-800 rounded-lg p-1">
+                        {/* Sliding background */}
+                        <div
+                            ref={sliderRef}
+                            className="absolute top-1 bottom-1 bg-gray-600 rounded-md transition-all duration-300 ease-in-out"
+                            style={{ left: 0, width: 0 }}
+                        />
+                        {filters.map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`relative z-10 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-300 ${
+                                    filter == f ? 'text-white' : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                {filterLabels[f]}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
