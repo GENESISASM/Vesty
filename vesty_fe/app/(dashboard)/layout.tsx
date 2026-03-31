@@ -1,9 +1,11 @@
 'use client';
 
 import { useAuth } from "@/context/auth_context";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { LogOut } from 'lucide-react';
+import Image from "next/image";
+import Link from "next/link";
 
 export default function DashboardLayout({
     children,
@@ -12,12 +14,19 @@ export default function DashboardLayout({
 }) {
     const { user, isLoading, logout } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         if (!isLoading && !user) {
             router.push("/login");
         }
     }, [user, isLoading]);
+
+    const getLinkStyle = (path: string) => {
+        return pathname == path 
+            ? "text-white font-medium" 
+            : "text-gray-400 hover:text-white transition";
+    }
 
     if (isLoading) {
         return (
@@ -32,7 +41,18 @@ export default function DashboardLayout({
             {/* Navbar */}
             <nav className="border-b border-gray-800 px-6 py-4">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    <h1 className="text-white font-bold text-xl">Vesty</h1>
+                    {/* Logo */}
+                    <Link href="/dashboard" className="flex items-center gap-3 group">
+                        <div className="relative w-8 h-8 transition-transform group-hover:scale-110">
+                            <Image 
+                                src="/image/VestyLogo.svg"
+                                alt="Vesty Logo Icon"
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
+                        <h1 className="text-white font-bold text-xl tracking-tight">Vesty</h1>
+                    </Link>
                     <div className="flex items-center gap-6">
                         <a href="/dashboard" className="text-gray-400 hover:text-white text-sm transition">
                             Dashboard
