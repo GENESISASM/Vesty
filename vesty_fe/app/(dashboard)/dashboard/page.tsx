@@ -5,8 +5,8 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import axiosInstance from '@/lib/axios';
 import { Finance, FinanceSummary } from '@/lib/types';
 import {
-    LineChart,
-    Line,
+    AreaChart,
+    Area,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -143,16 +143,31 @@ export default function DashboardPage() {
 
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
-        return (
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 text-xs">
-                <p className="text-gray-400 mb-2">{label}</p>
-                {payload.map((p: any) => (
-                    <p key={p.name} style={{ color: p.color }} className="font-medium">
-                    {p.name == 'income' ? 'Income' : 'Expense'}: {formatCurrency(p.value)}
+            return (
+                <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700 shadow-2xl rounded-xl p-4 min-w-40">
+                    <p className="text-gray-400 text-xs mb-3 font-medium border-b border-gray-800 pb-2">
+                        {label}
                     </p>
-                ))}
-            </div>
-        );
+                    <div className="space-y-2">
+                        {payload.map((p: any) => (
+                            <div key={p.name} className="flex items-center justify-between gap-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <span 
+                                        className="w-2.5 h-2.5 rounded-full" 
+                                        style={{ backgroundColor: p.color }}
+                                    ></span>
+                                    <span className="text-gray-300 capitalize">
+                                        {p.name == 'income' ? 'Income' : 'Expense'}
+                                    </span>
+                                </div>
+                                <span style={{ color: p.color }} className="font-semibold">
+                                    {formatCurrency(p.value)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
         }
         return null;
     };
@@ -239,7 +254,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Line Chart */}
+                {/* Area Chart */}
                 {isLoading ? (
                     <div className="h-64 bg-gray-800 rounded-lg animate-pulse" />
                 ) : chartData.length == 0 ? (
@@ -248,45 +263,61 @@ export default function DashboardPage() {
                 </div>
                 ) : (
                 <ResponsiveContainer width="100%" height={260}>
-                    <LineChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+                    <defs>
+                        <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                        </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                     <XAxis
                         dataKey="date"
                         tick={{ fill: '#6b7280', fontSize: 11 }}
                         axisLine={{ stroke: '#374151' }}
                         tickLine={false}
+                        dy={10}
                     />
                     <YAxis
                         tickFormatter={formatYAxis}
                         tick={{ fill: '#6b7280', fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
+                        dx={10}
                     />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#374151', strokeWidth: 1, strokeDasharray: '4 4' }} />
                     <Legend
+                        verticalAlign="top"
+                        height={36}
                         formatter={(value) => (
-                        <span style={{ color: '#9ca3af', fontSize: 12 }}>
+                        <span className="text-gray-400 text-xs font-medium capitalize ml-1">
                             {value == 'income' ? 'Income' : 'Expense'}
                         </span>
                         )}
                     />
-                    <Line
+                    <Area
                         type="monotone"
                         dataKey="income"
                         stroke="#22c55e"
-                        strokeWidth={2}
-                        dot={{ fill: '#22c55e', r: 4 }}
-                        activeDot={{ r: 6 }}
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorIncome)"
+                        activeDot={{ r: 6, strokeWidth: 2, stroke: '#111827' }}
                     />
-                    <Line
+                    <Area
                         type="monotone"
                         dataKey="expense"
                         stroke="#ef4444"
-                        strokeWidth={2}
-                        dot={{ fill: '#ef4444', r: 4 }}
-                        activeDot={{ r: 6 }}
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorExpense)"
+                        activeDot={{ r: 6, strokeWidth: 2, stroke: '#111827' }}
                     />
-                    </LineChart>
+                    </AreaChart>
                 </ResponsiveContainer>
                 )}
             </div>
