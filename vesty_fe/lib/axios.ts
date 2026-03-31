@@ -21,7 +21,8 @@ axiosInstance.interceptors.request.use((config) => {
 
 axiosInstance.interceptors.response.use(
     (response) => response, (error) => {
-        if (error.response && error.response.status == 401) {
+        const isLoginEndpoint = error.config?.url?.includes('/auth/user/login')
+        if (error.response?.status == 401 && !isLoginEndpoint) {
             if (typeof window != 'undefined') {
                 localStorage.removeItem('vesty_token');
                 localStorage.removeItem('vesty_user');
