@@ -27,7 +27,7 @@ export default function DashboardPage() {
     const filterRef = useRef<HTMLDivElement>(null);
     const sliderRef = useRef<HTMLDivElement>(null);
     const filters: FilterType[] = ['7days', 'monthly', 'yearly'];
-    const filterLabels = { '7days': '7 D', monthly: 'Monthly', yearly: 'Year' };
+    const filterLabels = { '7days': '7D', monthly: 'Month', yearly: 'Year' };
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
