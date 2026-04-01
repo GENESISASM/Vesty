@@ -287,19 +287,19 @@ export default function DashboardPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                        <p className="text-gray-400 text-sm mb-1">BALANCE</p>
+                        <p className="font-quicksand text-gray-400 text-sm mb-1">BALANCE</p>
                         <p className={`text-2xl font-bold ${(summary?.balance ?? 0) >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
                             {formatCurrency(summary?.balance ?? 0)}
                         </p>
                     </div>
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                        <p className="text-gray-400 text-sm mb-1">INCOME</p>
+                        <p className="font-quicksand text-gray-400 text-sm mb-1">INCOME</p>
                         <p className="text-green-400 text-2xl font-bold">
                             {formatCurrency(summary?.totalIncome ?? 0)}
                         </p>
                     </div>
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                        <p className="text-gray-400 text-sm mb-1">EXPENSE</p>
+                        <p className="font-quicksand text-gray-400 text-sm mb-1">EXPENSE</p>
                         <p className="text-red-400 text-2xl font-bold">
                             {formatCurrency(summary?.totalExpense ?? 0)}
                         </p>
@@ -367,7 +367,7 @@ export default function DashboardPage() {
                         )}
                     </div>
                 </div>
-                
+
                 {/* Area Chart */}
                 <div className="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-xl p-6">
                     <div className="flex items-center justify-between mb-6">
