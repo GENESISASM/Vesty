@@ -56,6 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </button>
             </div>
 
+            {/* SideBar Mobile Settings */}
             <nav className="flex-1 px-3 space-y-1">
                 {navLinks.map(({ href, label, icon: Icon }) => (
                     <Link key={href} href={href} onClick={() => setIsMobileOpen(false)}
@@ -123,9 +124,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* Desktop Header */}
                     <div className="hidden md:flex items-center gap-4">
                         <div className="relative group py-2">
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 w-17 h-9 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-white transition">
-                                <Languages size={16} />
-                                <span className="text-[11px] font-bold uppercase tracking-widest">{lang}</span>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 w-12 h-9 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-white transition">
+                                <span className="text-[14px] font-bold uppercase tracking-widest">{lang}</span>
                             </button>
                             
                             {/* Dropdown Languages */}
