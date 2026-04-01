@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import axiosInstance from '@/lib/axios';
 import { Finance } from '@/lib/types';
 
-const CATEGORIES = ['Salary', 'Food', 'Transport', 'Shopping', 'Health', 'Maintenance', 'Entertainment', 'Bills', 'Liability','Other'];
+const CATEGORIES = ['Salary', 'Commission', 'Food', 'Transport', 'Shopping', 'Health', 'Maintenance', 'Entertainment', 'Bills', 'Liability','Other'];
 
 const defaultForm = {
     type: 'income' as 'income' | 'expense',
