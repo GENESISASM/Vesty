@@ -73,28 +73,46 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </nav>
 
             {/* Mobile Settings */}
-            <div className="md:hidden border-t border-gray-800 p-5 space-y-5 bg-gray-900/50">
+            <div className="md:hidden border-t border-gray-800 p-5 space-y-6 bg-gray-900/50">
+                {/* Button Language */}
                 <div className="flex items-center justify-between text-white">
-                    <div className="flex items-center gap-3 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                        <Languages size={18} />
+                    <div className="flex items-center gap-3 text-gray-400 text-[14px] font-bold uppercase tracking-wider">
+                        <div className="w-5 h-5 flex items-center justify-center">
+                            <Languages size={18} />
+                        </div>
                         <span>Language</span>
                     </div>
-                    <div className="flex bg-gray-800 rounded-xl p-1 gap-1 border border-gray-700">
-                        <button onClick={() => setLang('EN')} className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition ${lang == 'EN' ? 'bg-blue-600 text-white' : 'text-gray-500'}`}>EN</button>
-                        <button onClick={() => setLang('ID')} className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition ${lang == 'ID' ? 'bg-blue-600 text-white' : 'text-gray-500'}`}>ID</button>
+                    <div className="flex bg-gray-800 rounded-xl p-1 gap-1 border border-gray-700 w-20 h-9 items-center justify-center relative">
+                        <button onClick={() => setLang('EN')}
+                            className={`flex-1 h-full text-[11px] font-bold rounded-lg transition relative z-10 ${lang == 'EN' ? 'text-white' : 'text-gray-500'}`}
+                        >
+                            EN
+                        </button>
+                        <button onClick={() => setLang('ID')}
+                            className={`flex-1 h-full text-[11px] font-bold rounded-lg transition relative z-10 ${lang == 'ID' ? 'text-white' : 'text-gray-500'}`}
+                        >
+                            ID
+                        </button>
+                        <div className={`absolute top-1 bottom-1 w-8.5 bg-blue-600 rounded-lg transition-all duration-300 ${lang == 'ID' ? 'left-10.25' : 'left-1'}`} />
                     </div>
                 </div>
 
                 {/* Button Theme */}
                 <div className="flex items-center justify-between text-white">
-                    <div className="flex items-center gap-3 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                        {theme ? <Moon size={18} /> : <Sun size={18} />}
+                    <div className="flex items-center gap-3 text-gray-400 text-[14px] font-bold uppercase tracking-wider">
+                        <div className="w-5 h-5 flex items-center justify-center">
+                            {theme ? <Moon size={18} /> : <Sun size={18} />}
+                        </div>
                         <span>Theme</span>
                     </div>
-                    <div className="bg-gray-800 border border-gray-700 p-1 rounded-xl flex items-center relative w-16 h-8">
-                        <div className={`absolute top-1 bottom-1 w-6 bg-gray-700 border border-gray-600 rounded-lg transition-all duration-300 ${theme ? 'left-7' : 'left-1'}`} />
-                        <button onClick={() => setTheme(false)} className="relative z-10 w-6 flex justify-center text-gray-500"><Sun size={14} className={!theme ? 'text-blue-400' : ''} /></button>
-                        <button onClick={() => setTheme(true)} className="relative z-10 w-6 flex justify-center text-gray-500"><Moon size={14} className={theme ? 'text-blue-400' : ''} /></button>
+                    <div className="bg-gray-800 border border-gray-700 p-1 rounded-xl flex items-center relative w-20 h-9">
+                        <div className={`absolute top-1 bottom-1 w-8.5 bg-gray-700 border border-gray-600 rounded-lg transition-all duration-300 ${theme ? 'left-10.25' : 'left-1'}`} />
+                        <button onClick={() => setTheme(false)} className="relative z-10 flex-1 flex justify-center text-gray-500">
+                            <Sun size={14} className={!theme ? 'text-blue-400' : ''} />
+                        </button>
+                        <button onClick={() => setTheme(true)} className="relative z-10 flex-1 flex justify-center text-gray-500">
+                            <Moon size={14} className={theme ? 'text-blue-400' : ''} />
+                        </button>
                     </div>
                 </div>
             </div>
