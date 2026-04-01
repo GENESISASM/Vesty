@@ -309,6 +309,65 @@ export default function DashboardPage() {
 
             {/* Area Chart & Pie Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                {/* PIE CHART */}
+                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-white font-semibold capitalize">{pieType} Allocation</h3>
+                        <div className="flex bg-gray-800 rounded-lg p-1">
+                            <button
+                                onClick={() => setPieType('income')}
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'income' ? 'bg-green-600 text-white' : 'text-gray-400'}`}
+                            >
+                                INC
+                            </button>
+                            <button
+                                onClick={() => setPieType('expense')}
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'expense' ? 'bg-red-600 text-white' : 'text-gray-400'}`}
+                            >
+                                EXP
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                        {pieData.length > 0 ? (
+                            <>
+                                <ResponsiveContainer width="100%" height={180}>
+                                    <PieChart>
+                                        <Pie key={`${refreshKey}-${filter}-${pieType}`}
+                                            data={pieData}
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            stroke="none"
+                                            shape={renderPieShape}
+                                            animationBegin={0}
+                                            animationDuration={900}
+                                        />
+                                        <Tooltip content={<PieTooltip/>} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="w-full mt-4 space-y-2">
+                                    {pieData.slice(0, 4).map((entry) => (
+                                        <div key={entry.name} className="flex items-center justify-between text-[11px]">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.fill }} />
+                                                <span className="text-gray-400 truncate max-w-20">{entry.name}</span>
+                                            </div>
+                                            <span className="text-gray-200 font-medium">
+                                                {((entry.value / pieData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-gray-500 text-xs italic">No data found</p>
+                        )}
+                    </div>
+                </div>
+                
                 {/* Area Chart */}
                 <div className="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-xl p-6">
                     <div className="flex items-center justify-between mb-6">
@@ -398,65 +457,6 @@ export default function DashboardPage() {
                             </AreaChart>
                         </ResponsiveContainer>
                     )}
-                </div>
-
-                {/* PIE CHART */}
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-white font-semibold capitalize">{pieType} Allocation</h3>
-                        <div className="flex bg-gray-800 rounded-lg p-1">
-                            <button
-                                onClick={() => setPieType('income')}
-                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'income' ? 'bg-green-600 text-white' : 'text-gray-400'}`}
-                            >
-                                INC
-                            </button>
-                            <button
-                                onClick={() => setPieType('expense')}
-                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'expense' ? 'bg-red-600 text-white' : 'text-gray-400'}`}
-                            >
-                                EXP
-                            </button>
-                        </div>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                        {pieData.length > 0 ? (
-                            <>
-                                <ResponsiveContainer width="100%" height={180}>
-                                    <PieChart>
-                                        <Pie key={`${refreshKey}-${filter}-${pieType}`}
-                                            data={pieData}
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            nameKey="name"
-                                            stroke="none"
-                                            shape={renderPieShape}
-                                            animationBegin={0}
-                                            animationDuration={900}
-                                        />
-                                        <Tooltip content={<PieTooltip/>} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                <div className="w-full mt-4 space-y-2">
-                                    {pieData.slice(0, 4).map((entry) => (
-                                        <div key={entry.name} className="flex items-center justify-between text-[11px]">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.fill }} />
-                                                <span className="text-gray-400 truncate max-w-20">{entry.name}</span>
-                                            </div>
-                                            <span className="text-gray-200 font-medium">
-                                                {((entry.value / pieData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1)}%
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        ) : (
-                            <p className="text-gray-500 text-xs italic">No data found</p>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>
