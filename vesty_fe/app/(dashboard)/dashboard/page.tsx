@@ -267,7 +267,7 @@ export default function DashboardPage() {
                 <button
                     onClick={fetchData}
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition border border-gray-700 disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition border border-gray-700 disabled:opacity-50 cursor-pointer group"
                 >
                     <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
                     Refresh
@@ -316,13 +316,15 @@ export default function DashboardPage() {
                         <div className="flex bg-gray-800 rounded-lg p-1">
                             <button
                                 onClick={() => setPieType('income')}
-                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'income' ? 'bg-green-600 text-white' : 'text-gray-400'}`}
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition cursor-pointer group
+                                    ${pieType == 'income' ? 'bg-green-600 text-white' : 'text-gray-400'}`}
                             >
                                 INC
                             </button>
                             <button
                                 onClick={() => setPieType('expense')}
-                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'expense' ? 'bg-red-600 text-white' : 'text-gray-400'}`}
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition cursor-pointer group
+                                    ${pieType == 'expense' ? 'bg-red-600 text-white' : 'text-gray-400'}`}
                             >
                                 EXP
                             </button>
@@ -382,7 +384,7 @@ export default function DashboardPage() {
                                 <button
                                     key={f}
                                     onClick={() => setFilter(f)}
-                                    className={`relative z-10 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-300 ${
+                                    className={`relative z-10 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-300 cursor-pointer group ${
                                         filter == f ? 'text-white' : 'text-gray-400 hover:text-white'
                                     }`}
                                 >

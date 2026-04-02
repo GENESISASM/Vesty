@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
     LayoutDashboard, Wallet,
-    Package, LogOut, ChevronLeft,
-    Menu, X, Sun, Moon, 
+    Package, LogOut,
+    Menu, Sun, Moon, 
     Languages, User, Check
 } from 'lucide-react';
 import Image from "next/image";
@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname();
     const [isDashboardOpen, setIsDashboardOpen] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
-    const [theme, setTheme] = useState(true);
+    const [theme, setTheme] = useState(false);
     const [lang, setLang] = useState('EN');
 
     useEffect(() => {
@@ -44,15 +44,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const SidebarContent = () => (
         <div className="flex flex-col h-full bg-gray-900 border-r border-gray-800 transition-all duration-300 font-poppins text-white">
-            <div className={`p-6 flex items-center ${isDashboardOpen ? 'justify-center' : 'justify-between'}`}>
-                <Link href="/dashboard" className="flex items-center gap-3">
+            {/* Hide SideBar Desktop */}
+            <div className="p-6">
+                <button onClick={() => setIsDashboardOpen(!isDashboardOpen)}
+                    className={`flex items-center gap-3 hover:opacity-80 transition-all w-full cursor-pointer group ${isDashboardOpen ? 'justify-center' : 'justify-start'}`}
+                >
                     <div className="relative w-8 h-8 shrink-0">
                         <Image src="/image/VestyLogo.svg" alt="Vesty" fill className="object-contain" />
                     </div>
-                    {!isDashboardOpen && <h1 className="text-white font-bold text-xl tracking-tight uppercase">Vesty</h1>}
-                </Link>
-                <button onClick={() => setIsDashboardOpen(!isDashboardOpen)} className="hidden md:flex p-1.5 rounded-lg hover:bg-gray-800 text-gray-400">
-                    <ChevronLeft size={18} className={`${isDashboardOpen ? 'rotate-180' : ''}`} />
+                    {!isDashboardOpen && (
+                        <h1 className="text-white font-bold text-xl tracking-tight uppercase animate-in fade-in duration-300">
+                            Vesty
+                        </h1>
+                    )}
                 </button>
             </div>
 
@@ -66,7 +70,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
                 ))}
                 
-                <button onClick={() => { logout(); router.push('/login'); }} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-400 hover:bg-red-400/10 mt-4 transition-all">
+                <button onClick={() => { logout(); router.push('/login'); }} 
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-400 hover:bg-red-400/10 mt-4 transition-all cursor-pointer group"
+                >
                     <LogOut size={20} className="shrink-0" />
                     {!isDashboardOpen && <span className="text-sm font-medium">Logout</span>}
                 </button>
@@ -142,35 +148,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* Desktop Header */}
                     <div className="hidden md:flex items-center gap-4">
                         <div className="relative group py-2">
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 w-12 h-9 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-white transition">
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 w-12 h-9 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-white transition cursor-pointer group">
                                 <span className="text-[14px] font-bold uppercase tracking-widest">{lang}</span>
                             </button>
                             
                             {/* Dropdown Languages */}
                             <div className="absolute right-0 mt-1 w-40 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
-                                <button onClick={() => setLang('EN')} className={`w-full flex items-center justify-between px-4 py-3 text-[14px] hover:bg-gray-800 transition ${lang == 'EN' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}>
+                                <button onClick={() => setLang('EN')} 
+                                    className={`w-full flex items-center justify-between px-4 py-3 text-[14px] hover:bg-gray-800 transition cursor-pointer group 
+                                    ${lang == 'EN' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}
+                                >
                                     <div className="flex items-center gap-2"><span className="text-base text-[14px]">US</span> English</div>
                                     {lang == 'EN' && <Check size={14} />}
                                 </button>
-                                <button onClick={() => setLang('ID')} className={`w-full flex items-center justify-between px-4 py-3 text-[14px] hover:bg-gray-800 transition ${lang == 'ID' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}>
+                                <button onClick={() => setLang('ID')} 
+                                    className={`w-full flex items-center justify-between px-4 py-3 text-[14px] hover:bg-gray-800 transition cursor-pointer group
+                                    ${lang == 'ID' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}
+                                >
                                     <div className="flex items-center gap-2"><span className="text-base text-[14px]">ID</span> Indonesia</div>
                                     {lang == 'ID' && <Check size={14} />}
                                 </button>
                             </div>
                         </div>
 
-                        {/* Button Theme */}
                         <div className="bg-gray-900 border border-gray-800 p-1 rounded-xl flex items-center relative w-17 h-9">
+                            {/* Button Theme */}
                             <div className={`absolute top-1 bottom-1 w-7 bg-gray-800 border border-gray-700 rounded-lg transition-all duration-300 ${theme ? 'left-[calc(100%-32px)]' : 'left-1'}`} />
-                            <button onClick={() => setTheme(false)} className="relative z-10 w-7 flex justify-center"><Sun size={16} className={!theme ? 'text-blue-400' : 'text-gray-500'} /></button>
-                            <button onClick={() => setTheme(true)} className="relative z-10 w-7 flex justify-center"><Moon size={16} className={theme ? 'text-blue-400' : 'text-gray-500'} /></button>
+                            <button onClick={() => setTheme(false)} className="relative z-10 w-7 flex justify-center cursor-pointer group">
+                                <Sun size={16} className={!theme ? 'text-blue-400' : 'text-gray-500'} />
+                            </button>
+                            <button onClick={() => setTheme(true)} className="relative z-10 w-7 flex justify-center cursor-pointer group">
+                                <Moon size={16} className={theme ? 'text-blue-400' : 'text-gray-500'} />
+                            </button>
                         </div>
-                        <button className="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-blue-400 transition shadow-inner"><User size={18} /></button>
+                        {/* Button Account */}
+                        <button className="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-blue-400 transition shadow-inner cursor-pointer group">
+                            <User size={18} />
+                        </button>
                     </div>
 
                     {/* Mobile Account */}
                     <div className="md:hidden">
-                        <button className="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400"><User size={18} /></button>
+                        <button className="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400">
+                            <User size={18} />
+                        </button>
                     </div>
                 </header>
 
