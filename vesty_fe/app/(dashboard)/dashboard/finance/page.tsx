@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import axiosInstance from '@/lib/axios';
 import { Finance } from '@/lib/types';
 import { 
     Search, Pencil, Trash2, 
-    Plus, CalendarDays, X
+    Plus, CalendarDays, X,
+    ChevronsUpDown, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -18,6 +19,11 @@ const defaultForm = {
     category: 'Salary',
     description: '',
     date: new Date().toISOString().split('T')[0],
+};
+
+type SortConfig = {
+    key: keyof Finance | 'amount_num' | null;
+    direction: 'asc' | 'desc' | null;
 };
 
 export default function FinancePage() {
@@ -34,6 +40,7 @@ export default function FinancePage() {
     const [tempRange, setTempRange] = useState<DateRange | undefined>(undefined);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
 
     const fetchFinances = useCallback(async () => {
         setIsLoading(true);
@@ -70,6 +77,59 @@ export default function FinancePage() {
         if (!date) return '';
         return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     };
+
+    const requestSort = (key: keyof Finance | 'amount_num') => {
+        let direction: 'asc' | 'desc' | null = 'asc';
+        
+        if (sortConfig.key === key) {
+            if (sortConfig.direction === 'asc') {
+                direction = 'desc';
+            } else if (sortConfig.direction === 'desc') {
+                direction = null;
+            }
+        }
+
+        setSortConfig({ key: direction ? key : null, direction });
+    };
+
+    const getSortIcon = (key: keyof Finance | 'amount_num') => {
+        if (sortConfig.key !== key) return <ChevronsUpDown size={14} className="ml-1 opacity-20" />;
+        if (sortConfig.direction === 'asc') return <ChevronUp size={14} className="ml-1 text-blue-500" />;
+        if (sortConfig.direction === 'desc') return <ChevronDown size={14} className="ml-1 text-blue-500" />;
+        return <ChevronsUpDown size={14} className="ml-1 opacity-20" />;
+    };
+
+    const processedFinances = useMemo(() => {
+        let result = finances.filter(f => {
+            const matchesSearch = f.category.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                f.description?.toLowerCase().includes(searchQuery.toLowerCase());
+            
+            if (!dateRange?.from || !dateRange?.to) return matchesSearch;
+
+            const fDate = new Date(f.date);
+            const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
+            const end = new Date(dateRange.to); end.setHours(23, 59, 59, 999);
+            
+            return matchesSearch && (fDate >= start && fDate <= end);
+        });
+
+        if (sortConfig.key && sortConfig.direction) {
+            result = [...result].sort((a, b) => {
+                let aValue: any = a[sortConfig.key as keyof Finance] || '';
+                let bValue: any = b[sortConfig.key as keyof Finance] || '';
+
+                if (sortConfig.key === 'amount_num') {
+                    aValue = Number(a.amount);
+                    bValue = Number(b.amount);
+                }
+
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        return result;
+    }, [finances, searchQuery, dateRange, sortConfig]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,25 +181,10 @@ export default function FinancePage() {
         setError(null);
     };
 
-    const filteredFinances = finances.filter(f => {
-        const matchesSearch = f.category.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            f.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        
-        if (!dateRange?.from || !dateRange?.to) return matchesSearch;
-
-        const fDate = new Date(f.date);
-        const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
-        const end = new Date(dateRange.to); end.setHours(23, 59, 59, 999);
-        
-        return matchesSearch && (fDate >= start && fDate <= end);
-    });
-
     return (
         <div className="max-w-7xl mx-auto">
             {/* Header Controls */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                
-                {/* SISI KIRI: Search & Filter */}
                 <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto order-2 md:order-1">
                     <div className="relative w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
@@ -154,23 +199,13 @@ export default function FinancePage() {
 
                     <div className="relative w-full md:w-auto" ref={dropdownRef}>
                         <button
-                            onClick={() => {
-                                setTempRange(dateRange);
-                                setIsFilterOpen(!isFilterOpen);
-                            }}
+                            onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
                             className={`flex items-center justify-between gap-3 px-4 py-2.5 border text-sm font-medium rounded-xl transition w-full ${
                                 isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
                             }`}
                         >
-                            <div className="flex items-center gap-2">
-                                <CalendarDays size={16} className="text-blue-400 shrink-0" />
-                                <span>
-                                    {dateRange?.from && dateRange?.to
-                                        ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}`
-                                        : 'Date Filter'
-                                    }
-                                </span>
-                            </div>
+                            <CalendarDays size={16} className="text-blue-400 shrink-0" />
+                            <span>{dateRange?.from && dateRange?.to ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}` : 'Date Filter'}</span>
                         </button>
 
                         {isFilterOpen && (
@@ -179,9 +214,7 @@ export default function FinancePage() {
                                     <DayPicker mode="range" selected={tempRange} onSelect={setTempRange} numberOfMonths={2} showOutsideDays={false} />
                                 </div>
                                 <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
-                                    <span className="text-gray-400 text-xs font-medium">
-                                        {tempRange?.from && tempRange?.to ? `${formatDateLabel(tempRange.from)} – ${formatDateLabel(tempRange.to)}` : 'Select range'}
-                                    </span>
+                                    <span className="text-gray-400 text-xs font-medium">{tempRange?.from && tempRange?.to ? `${formatDateLabel(tempRange.from)} – ${formatDateLabel(tempRange.to)}` : 'Select range'}</span>
                                     <div className="flex gap-2">
                                         <button onClick={() => { setTempRange(undefined); setDateRange(undefined); setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 rounded-lg transition">Reset</button>
                                         <button onClick={() => { if (tempRange?.from && tempRange?.to) { setDateRange(tempRange); } setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg transition">Apply</button>
@@ -192,14 +225,9 @@ export default function FinancePage() {
                     </div>
                 </div>
 
-                {/* SISI KANAN: Add Transaction */}
                 <div className="w-full md:w-auto order-1 md:order-2 flex justify-end">
-                    <button
-                        onClick={() => setShowForm(true)}
-                        className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20"
-                    >
-                        <Plus size={18} />
-                        Add Transaction
+                    <button onClick={() => setShowForm(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20">
+                        <Plus size={18} /> Add Transaction
                     </button>
                 </div>
             </div>
@@ -209,50 +237,46 @@ export default function FinancePage() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-800/50 text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-800">
-                                <th className="px-6 py-4 font-bold">Type</th>
-                                <th className="px-6 py-4 font-bold">Category</th>
-                                <th className="px-6 py-4 font-bold">Description</th>
-                                <th className="px-6 py-4 font-bold">Date</th>
-                                <th className="px-6 py-4 font-bold text-right">Amount</th>
+                            <tr className="bg-gray-800/50 text-gray-300 text-[13px] uppercase tracking-wider border-b border-gray-800 select-none">
+                                <th onClick={() => requestSort('type')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition group">
+                                    <div className="flex items-center justify-center">Type {getSortIcon('type')}</div>
+                                </th>
+                                <th onClick={() => requestSort('category')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition group">
+                                    <div className="flex items-center justify-center">Category {getSortIcon('category')}</div>
+                                </th>
+                                <th onClick={() => requestSort('description')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition group">
+                                    <div className="flex items-center justify-center">Description {getSortIcon('description')}</div>
+                                </th>
+                                <th onClick={() => requestSort('date')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition group">
+                                    <div className="flex items-center justify-center">Date {getSortIcon('date')}</div>
+                                </th>
+                                <th onClick={() => requestSort('amount_num')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition group">
+                                    <div className="flex items-center justify-center">Amount {getSortIcon('amount_num')}</div>
+                                </th>
                                 <th className="px-6 py-4 font-bold text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-800">
+                        <tbody className="divide-y divide-gray-800 text-center">
                             {isLoading ? (
                                 [1,2,3].map(i => (
                                     <tr key={i} className="animate-pulse">
                                         <td colSpan={6} className="px-6 py-4"><div className="h-12 bg-gray-800/50 rounded-lg" /></td>
                                     </tr>
                                 ))
-                            ) : filteredFinances.length > 0 ? (
-                                filteredFinances.map((f) => (
+                            ) : processedFinances.length > 0 ? (
+                                processedFinances.map((f) => (
                                     <tr key={f.id} className="hover:bg-gray-800/30 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <span className="text-gray-300 text-sm capitalize">{f.type}</span>
-                                        </td>
-                                        {/* Kolom Category */}
-                                        <td className="px-6 py-4">
-                                            <p className="text-white font-semibold text-sm">{f.category}</p>
-                                        </td>
-                                        {/* Kolom Description */}
-                                        <td className="px-6 py-4">
-                                            <p className="text-gray-500 text-sm">{f.description || '-'}</p>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-400 text-sm">
-                                            {formatDateLabel(new Date(f.date))}
-                                        </td>
-                                        <td className={`px-6 py-4 text-right font-bold text-sm ${f.type == 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                                        <td className="px-6 py-4"><span className="text-gray-100 text-sm capitalize">{f.type}</span></td>
+                                        <td className="px-6 py-4"><p className="text-gray-100 text-sm">{f.category}</p></td>
+                                        <td className="px-6 py-4"><p className="text-gray-100 text-sm">{f.description || '-'}</p></td>
+                                        <td className="px-6 py-4 text-gray-100 text-sm">{formatDateLabel(new Date(f.date))}</td>
+                                        <td className={`px-6 py-4 font-bold text-sm ${f.type == 'income' ? 'text-green-400' : 'text-red-400'}`}>
                                             {f.type == 'income' ? '+' : '-'}{formatCurrency(Number(f.amount))}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => handleEdit(f)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition">
-                                                    <Pencil size={16} />
-                                                </button>
-                                                <button onClick={() => setDeleteId(f.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition">
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                <button onClick={() => handleEdit(f)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition"><Pencil size={16} /></button>
+                                                <button onClick={() => setDeleteId(f.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition"><Trash2 size={16} /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -267,8 +291,7 @@ export default function FinancePage() {
                 </div>
             </div>
 
-            {/* Modals Form & Delete Tetap Sama */}
-            {/* ... */}
+            {/* Edit Form */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
@@ -298,6 +321,7 @@ export default function FinancePage() {
                 </div>
             )}
 
+            {/* Delete */}
             {deleteId && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-sm text-center">
