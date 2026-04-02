@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { 
     LayoutDashboard, Wallet,
     Package, LogOut,
-    Menu, Sun, Moon, 
-    Languages, User, Check
+    Menu, Languages,
+    User, Check
 } from 'lucide-react';
 import Image from "next/image";
 import Link from "next/link";
@@ -18,7 +18,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname();
     const [isDashboardOpen, setIsDashboardOpen] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
-    const [theme, setTheme] = useState(false);
     const [lang, setLang] = useState('EN');
 
     useEffect(() => {
@@ -102,25 +101,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <div className={`absolute top-1 bottom-1 w-8.5 bg-blue-600 rounded-lg transition-all duration-300 ${lang == 'ID' ? 'left-10.25' : 'left-1'}`} />
                     </div>
                 </div>
-
-                {/* Button Theme */}
-                <div className="flex items-center justify-between text-white">
-                    <div className="flex items-center gap-3 text-gray-400 text-[14px] font-bold uppercase tracking-wider">
-                        <div className="w-5 h-5 flex items-center justify-center">
-                            {theme ? <Moon size={18} /> : <Sun size={18} />}
-                        </div>
-                        <span>Theme</span>
-                    </div>
-                    <div className="bg-gray-800 border border-gray-700 p-1 rounded-xl flex items-center relative w-20 h-9">
-                        <div className={`absolute top-1 bottom-1 w-8.5 bg-gray-700 border border-gray-600 rounded-lg transition-all duration-300 ${theme ? 'left-10.25' : 'left-1'}`} />
-                        <button onClick={() => setTheme(false)} className="relative z-10 flex-1 flex justify-center text-gray-500">
-                            <Sun size={14} className={!theme ? 'text-blue-400' : ''} />
-                        </button>
-                        <button onClick={() => setTheme(true)} className="relative z-10 flex-1 flex justify-center text-gray-500">
-                            <Moon size={14} className={theme ? 'text-blue-400' : ''} />
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     );
@@ -171,16 +151,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </div>
                         </div>
 
-                        <div className="bg-gray-900 border border-gray-800 p-1 rounded-xl flex items-center relative w-17 h-9">
-                            {/* Button Theme */}
-                            <div className={`absolute top-1 bottom-1 w-7 bg-gray-800 border border-gray-700 rounded-lg transition-all duration-300 ${theme ? 'left-[calc(100%-32px)]' : 'left-1'}`} />
-                            <button onClick={() => setTheme(false)} className="relative z-10 w-7 flex justify-center cursor-pointer group">
-                                <Sun size={16} className={!theme ? 'text-blue-400' : 'text-gray-500'} />
-                            </button>
-                            <button onClick={() => setTheme(true)} className="relative z-10 w-7 flex justify-center cursor-pointer group">
-                                <Moon size={16} className={theme ? 'text-blue-400' : 'text-gray-500'} />
-                            </button>
-                        </div>
                         {/* Button Account */}
                         <button className="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-blue-400 transition shadow-inner cursor-pointer group">
                             <User size={18} />
