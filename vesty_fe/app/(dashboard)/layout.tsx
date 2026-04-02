@@ -122,7 +122,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <header className="h-16 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-950/50 backdrop-blur-md sticky top-0 z-40">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsMobileOpen(true)} className="md:hidden text-gray-400 hover:text-white p-1"><Menu size={24} /></button>
-                        <h2 className="text-white font-semibold text-sm md:text-base capitalize tracking-wide">{pathname.split('/').pop() || 'Overview'}</h2>
+                        <h2 className="text-white font-bold font-poppins text-lg md:text-lg capitalize tracking-tight">{pathname.split('/').pop() || 'Overview'}</h2>
                     </div>
 
                     {/* Desktop Header */}
