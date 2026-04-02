@@ -134,11 +134,6 @@
   }
 }
 
-.rdp-dark,
-.rdp-dark * {
-  background: transparent !important;
-}
-
 .rdp-dark {
   color: #e5e7eb !important;
 }
@@ -159,41 +154,45 @@
   color: #d1d5db !important;
   border-radius: 6px !important;
   font-size: 12px !important;
-  width: 34px !important;
-  height: 34px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background-color: transparent;
 }
 
-.rdp-dark .rdp-day:hover:not(.rdp-day_outside):not(.rdp-day_selected):not(.rdp-day_range_middle) {
+.rdp-dark .rdp-day:hover:not(.rdp-outside):not(.rdp-selected) {
   background-color: #374151 !important;
   color: #ffffff !important;
 }
 
-.rdp-dark .rdp-day_range_start,
-.rdp-dark .rdp-day_range_end {
+.rdp-dark .rdp-range_start,
+.rdp-dark .rdp-range_end,
+.rdp-dark .rdp-selected {
   background-color: #3b82f6 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
-  border-radius: 6px !important;
 }
 
-.rdp-dark .rdp-day_selected:not(.rdp-day_range_middle) {
-  background-color: #3b82f6 !important;
-  color: #ffffff !important;
-  border-radius: 6px !important;
+.rdp-dark .rdp-range_start {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+.rdp-dark .rdp-range_end {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
 }
 
-.rdp-dark .rdp-day_range_middle {
+.rdp-dark .rdp-range_middle {
   background-color: rgba(59, 130, 246, 0.15) !important;
   color: #93c5fd !important;
   border-radius: 0 !important;
 }
 
-.rdp-dark .rdp-day_outside {
+.rdp-dark .rdp-outside {
   color: #4b5563 !important;
   opacity: 0.4 !important;
 }
 
-.rdp-dark .rdp-day_today:not(.rdp-day_range_start):not(.rdp-day_range_end):not(.rdp-day_selected) {
+.rdp-dark .rdp-today:not(.rdp-range_start):not(.rdp-range_end):not(.rdp-selected) {
   color: #3b82f6 !important;
   font-weight: 700 !important;
 }
@@ -211,4 +210,22 @@
 
 .rdp-dark .rdp-months {
   gap: 16px !important;
+}
+
+.rdp-dark .rdp-day_button {
+  border-radius: 6px !important;
+}
+
+.rdp-dark .rdp-range_start .rdp-day_button {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.rdp-dark .rdp-range_end .rdp-day_button {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.rdp-dark .rdp-range_middle .rdp-day_button {
+  border-radius: 0 !important;
 }
