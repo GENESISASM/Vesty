@@ -165,8 +165,7 @@ export default function DashboardPage() {
                         Here's your financial overview
                     </p>
                 </div>
-
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center justify-end gap-3 w-full md:w-auto">
                     {/* Filter */}
                     <div className="relative" ref={dropdownRef}>
                         <button
@@ -181,16 +180,17 @@ export default function DashboardPage() {
                             }`}
                         >
                             <CalendarDays size={16} className="text-blue-400 shrink-0" />
-                            <span className="hidden sm:inline">
+                            {/* Hidden di mobile, muncul di md (Medium screens) keatas */}
+                            <span className="hidden md:inline">
                                 {dateRange?.from && dateRange?.to
                                     ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}`
-                                    : 'Date Filter'
+                                    : 'Filter'
                                 }
                             </span>
                         </button>
 
                         {isFilterOpen && (
-                            <div className="absolute right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
+                            <div className="absolute -right-9 md:right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
                                 <div className="p-2.5 rdp-dark">
                                     <DayPicker
                                         mode="range"
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50"
                     >
                         <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-                        <span className="hidden sm:inline">Refresh</span>
+                        <span className="hidden md:inline">Refresh</span>
                     </button>
                 </div>
             </div>
@@ -293,7 +293,7 @@ export default function DashboardPage() {
                             <>
                                 <ResponsiveContainer width="100%" height={180}>
                                     <PieChart>
-                                        <Pie key={`${refreshKey}-${dateRange?.from?.toISOString()}-${pieType}`}
+                                        <Pie key={`${refreshKey}-${dateRange?.from ? dateRange.from.toISOString() : 'all'}-${pieType}`}
                                             data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5}
                                             dataKey="value" nameKey="name" stroke="none" shape={renderPieShape}
                                         />
