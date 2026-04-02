@@ -34,15 +34,8 @@ export default function DashboardPage() {
     const { user } = useAuth();
     const [finances, setFinances] = useState<Finance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
-    const today = new Date();
-    const defaultRange: DateRange = {
-        from: new Date(today.getFullYear(), today.getMonth(), 1),
-        to: new Date(today.getFullYear(), today.getMonth() + 1, 0),
-    };
-
-    const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultRange);
-    const [tempRange, setTempRange] = useState<DateRange | undefined>(defaultRange);
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const [tempRange, setTempRange] = useState<DateRange | undefined>(undefined);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [pieType, setPieType] = useState<'income' | 'expense'>('expense');
     const [refreshKey, setRefreshKey] = useState(0);
@@ -114,7 +107,12 @@ export default function DashboardPage() {
 
         const startTime = dateRange?.from?.getTime() ?? 0;
         const endTime = dateRange?.to?.getTime() ?? 0;
-        const isDailyGrouping = (endTime - startTime) <= 31 * 24 * 60 * 60 * 1000;
+        let isDailyGrouping = true;
+        if (dateRange?.from && dateRange?.to) {
+            isDailyGrouping = (endTime - startTime) <= 31 * 24 * 60 * 60 * 1000;
+        } else {
+            isDailyGrouping = false; 
+        }
 
         if (isDailyGrouping) {
             const days: { [key: string]: { date: string; income: number; expense: number } } = {};
@@ -161,7 +159,7 @@ export default function DashboardPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-white">
-                        Welcome back, {user?.name?.split(' ')[0]} 👋
+                        Welcome back, {user?.name}
                     </h2>
                     <p className="text-gray-400 text-sm mt-1">
                         Here's your financial overview
@@ -186,14 +184,14 @@ export default function DashboardPage() {
                             <span className="hidden sm:inline">
                                 {dateRange?.from && dateRange?.to
                                     ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}`
-                                    : 'Filter by Date'
+                                    : 'Date Filter'
                                 }
                             </span>
                         </button>
 
                         {isFilterOpen && (
                             <div className="absolute right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
-                                <div className="p-4 rdp-dark">
+                                <div className="p-2.5 rdp-dark">
                                     <DayPicker
                                         mode="range"
                                         selected={tempRange}
@@ -212,8 +210,8 @@ export default function DashboardPage() {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => {
-                                                setTempRange(defaultRange);
-                                                setDateRange(defaultRange);
+                                                setTempRange(undefined);
+                                                setDateRange(undefined);
                                                 setIsFilterOpen(false);
                                             }}
                                             className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition"
