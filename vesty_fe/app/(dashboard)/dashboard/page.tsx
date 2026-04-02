@@ -180,7 +180,6 @@ export default function DashboardPage() {
                             }`}
                         >
                             <CalendarDays size={16} className="text-blue-400 shrink-0" />
-                            {/* Hidden di mobile, muncul di md (Medium screens) keatas */}
                             <span className="hidden md:inline">
                                 {dateRange?.from && dateRange?.to
                                     ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}`
@@ -281,11 +280,17 @@ export default function DashboardPage() {
                         <h3 className="text-white font-semibold">Allocation</h3>
                         <div className="flex bg-gray-800 rounded-lg p-1">
                             <button onClick={() => setPieType('income')}
-                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'income' ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}
-                            >Income</button>
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition 
+                                    ${pieType == 'income' ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                Income
+                            </button>
                             <button onClick={() => setPieType('expense')}
-                                className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'expense' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}`}
-                            >Expense</button>
+                                className={`px-3 py-1 text-xs font-bold rounded-md transition 
+                                    ${pieType == 'expense' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                Expense
+                            </button>
                         </div>
                     </div>
                     <div className="flex-1 flex flex-col items-center justify-center">

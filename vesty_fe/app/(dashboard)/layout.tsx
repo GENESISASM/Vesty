@@ -41,17 +41,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { href: '/dashboard/stock', label: 'Stock', icon: Package },
     ];
 
-    const SidebarContent = () => (
+    const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
         <div className="flex flex-col h-full bg-gray-900 border-r border-gray-800 transition-all duration-300 font-poppins text-white">
-            {/* Hide SideBar Desktop */}
             <div className="p-6">
-                <button onClick={() => setIsDashboardOpen(!isDashboardOpen)}
-                    className={`flex items-center gap-3 hover:opacity-80 transition-all w-full cursor-pointer group ${isDashboardOpen ? 'justify-center' : 'justify-start'}`}
+                <button 
+                    onClick={() => {
+                        if (isMobile) {
+                            setIsMobileOpen(false);
+                        } else {
+                            setIsDashboardOpen(!isDashboardOpen);
+                        }
+                    }}
+                    className={`flex items-center gap-3 hover:opacity-80 transition-all w-full cursor-pointer group ${!isMobile && isDashboardOpen ? 'justify-center' : 'justify-start'}`}
                 >
                     <div className="relative w-8 h-8 shrink-0">
                         <Image src="/image/VestyLogo.svg" alt="Vesty" fill className="object-contain" />
                     </div>
-                    {!isDashboardOpen && (
+                    {(isMobile || !isDashboardOpen) && (
                         <h1 className="text-white font-bold text-xl tracking-tight uppercase animate-in fade-in duration-300">
                             Vesty
                         </h1>
@@ -59,13 +65,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </button>
             </div>
 
-            {/* SideBar Mobile Settings */}
             <nav className="flex-1 px-3 space-y-1">
                 {navLinks.map(({ href, label, icon: Icon }) => (
                     <Link key={href} href={href} onClick={() => setIsMobileOpen(false)}
                         className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${pathname == href ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
                         <Icon size={20} className="shrink-0" />
-                        {!isDashboardOpen && <span className="font-medium text-sm">{label}</span>}
+                        {(isMobile || !isDashboardOpen) && <span className="font-medium text-sm">{label}</span>}
                     </Link>
                 ))}
                 
@@ -73,35 +78,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-400 hover:bg-red-400/10 mt-4 transition-all cursor-pointer group"
                 >
                     <LogOut size={20} className="shrink-0" />
-                    {!isDashboardOpen && <span className="text-sm font-medium">Logout</span>}
+                    {(isMobile || !isDashboardOpen) && <span className="text-sm font-medium">Logout</span>}
                 </button>
             </nav>
 
-            {/* Mobile Settings */}
-            <div className="md:hidden border-t border-gray-800 p-5 space-y-6 bg-gray-900/50">
-                {/* Button Language */}
-                <div className="flex items-center justify-between text-white">
-                    <div className="flex items-center gap-3 text-gray-400 text-[14px] font-bold uppercase tracking-wider">
-                        <div className="w-5 h-5 flex items-center justify-center">
+            {isMobile && (
+                <div className="border-t border-gray-800 p-5 space-y-6 bg-gray-900/50">
+                    <div className="flex items-center justify-between text-white">
+                        <div className="flex items-center gap-3 text-gray-400 text-[14px] font-bold uppercase tracking-wider">
                             <Languages size={18} />
+                            <span>Language</span>
                         </div>
-                        <span>Language</span>
-                    </div>
-                    <div className="flex bg-gray-800 rounded-xl p-1 gap-1 border border-gray-700 w-20 h-9 items-center justify-center relative">
-                        <button onClick={() => setLang('EN')}
-                            className={`flex-1 h-full text-[11px] font-bold rounded-lg transition relative z-10 ${lang == 'EN' ? 'text-white' : 'text-gray-500'}`}
-                        >
-                            EN
-                        </button>
-                        <button onClick={() => setLang('ID')}
-                            className={`flex-1 h-full text-[11px] font-bold rounded-lg transition relative z-10 ${lang == 'ID' ? 'text-white' : 'text-gray-500'}`}
-                        >
-                            ID
-                        </button>
-                        <div className={`absolute top-1 bottom-1 w-8.5 bg-blue-600 rounded-lg transition-all duration-300 ${lang == 'ID' ? 'left-10.25' : 'left-1'}`} />
+                        <div className="flex bg-gray-800 rounded-xl p-1 gap-1 border border-gray-700 w-20 h-9 items-center justify-center relative">
+                            <button onClick={() => setLang('EN')}
+                                className={`flex-1 h-full text-[11px] font-bold rounded-lg transition relative z-10 ${lang == 'EN' ? 'text-white' : 'text-gray-500'}`}
+                            >EN</button>
+                            <button onClick={() => setLang('ID')}
+                                className={`flex-1 h-full text-[11px] font-bold rounded-lg transition relative z-10 ${lang == 'ID' ? 'text-white' : 'text-gray-500'}`}
+                            >ID</button>
+                            <div className={`absolute top-1 bottom-1 w-8 bg-blue-600 rounded-lg transition-all duration-300 ${lang == 'ID' ? 'left-10' : 'left-1'}`} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 
@@ -111,53 +110,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <SidebarContent />
             </aside>
 
-            <div className={`md:hidden fixed inset-0 z-60 ${isMobileOpen ? 'visible' : 'invisible'}`}>
-                <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isMobileOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setIsMobileOpen(false)} />
-                <aside className={`absolute top-0 left-0 h-full w-72 transition-transform duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                    <SidebarContent />
+            <div className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileOpen(false)} />
+                <aside className={`absolute top-0 left-0 h-full w-72 transition-transform duration-300 ease-in-out ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <SidebarContent isMobile={true} />
                 </aside>
             </div>
 
             <div className="flex-1 flex flex-col min-w-0">
                 <header className="h-16 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-950/50 backdrop-blur-md sticky top-0 z-40">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => setIsMobileOpen(true)} className="md:hidden text-gray-400 hover:text-white p-1"><Menu size={24} /></button>
-                        <h2 className="text-white font-bold font-poppins text-lg md:text-lg capitalize tracking-tight">{pathname.split('/').pop() || 'Overview'}</h2>
+                        <button onClick={() => setIsMobileOpen(true)} className="md:hidden text-gray-400 hover:text-white p-1">
+                            <Menu size={24} />
+                        </button>
+                        <h2 className="text-white font-bold font-poppins text-lg capitalize tracking-tight">
+                            {pathname.split('/').pop() || 'Overview'}
+                        </h2>
                     </div>
 
-                    {/* Desktop Header */}
                     <div className="hidden md:flex items-center gap-4">
                         <div className="relative group py-2">
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 w-12 h-9 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-white transition cursor-pointer group">
+                            <button className="flex items-center justify-center w-12 h-9 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-white transition cursor-pointer">
                                 <span className="text-[14px] font-bold uppercase tracking-widest">{lang}</span>
                             </button>
-                            
-                            {/* Dropdown Languages */}
                             <div className="absolute right-0 mt-1 w-40 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
-                                <button onClick={() => setLang('EN')} 
-                                    className={`w-full flex items-center justify-between px-4 py-3 text-[14px] hover:bg-gray-800 transition cursor-pointer group 
-                                    ${lang == 'EN' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}
-                                >
-                                    <div className="flex items-center gap-2"><span className="text-base text-[14px]">US</span> English</div>
+                                <button onClick={() => setLang('EN')} className={`w-full flex items-center justify-between px-4 py-3 text-[14px] hover:bg-gray-800 transition ${lang == 'EN' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}>
+                                    <div className="flex items-center gap-2">US English</div>
                                     {lang == 'EN' && <Check size={14} />}
                                 </button>
-                                <button onClick={() => setLang('ID')} 
-                                    className={`w-full flex items-center justify-between px-4 py-3 text-[14px] hover:bg-gray-800 transition cursor-pointer group
-                                    ${lang == 'ID' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}
-                                >
-                                    <div className="flex items-center gap-2"><span className="text-base text-[14px]">ID</span> Indonesia</div>
+                                <button onClick={() => setLang('ID')} className={`w-full flex items-center justify-between px-4 py-3 text-[14px] hover:bg-gray-800 transition ${lang == 'ID' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}>
+                                    <div className="flex items-center gap-2">ID Indonesia</div>
                                     {lang == 'ID' && <Check size={14} />}
                                 </button>
                             </div>
                         </div>
-
-                        {/* Button Account */}
-                        <button className="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-blue-400 transition shadow-inner cursor-pointer group">
+                        <button className="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-blue-400 transition">
                             <User size={18} />
                         </button>
                     </div>
 
-                    {/* Mobile Account */}
                     <div className="md:hidden">
                         <button className="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400">
                             <User size={18} />
