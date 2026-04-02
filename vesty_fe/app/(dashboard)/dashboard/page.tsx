@@ -12,7 +12,9 @@ import {
     Tooltip, Legend,
     ResponsiveContainer, Sector
 } from 'recharts';
-import { RefreshCw, Filter } from 'lucide-react';
+import { RefreshCw, CalendarDays } from 'lucide-react';
+import { DayPicker, DateRange } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
 
 const INCOME_COLORS  = [ '#10b981', '#0ea5e9', '#6366f1', '#8b5cf6', '#06b6d4' ];
 const EXPENSE_COLORS = [ '#dc2f02', '#e85d04', '#f48c06', '#faa307', '#ffba08' ];
@@ -21,7 +23,7 @@ const renderPieShape = (props: any) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, isActive } = props;
     return (
         <g>
-            <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={isActive ? outerRadius + 5 : outerRadius} 
+            <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={isActive ? outerRadius + 5 : outerRadius}
                 startAngle={startAngle} endAngle={endAngle} fill={fill} cornerRadius={isActive ? 6 : 4} stroke="none"
             />
         </g>
@@ -32,17 +34,16 @@ export default function DashboardPage() {
     const { user } = useAuth();
     const [finances, setFinances] = useState<Finance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    
-    // Set default date range to Current Month
+
     const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    // Filter State
-    const [dateRange, setDateRange] = useState({ start: firstDay, end: lastDay });
+    const defaultRange: DateRange = {
+        from: new Date(today.getFullYear(), today.getMonth(), 1),
+        to: new Date(today.getFullYear(), today.getMonth() + 1, 0),
+    };
+
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultRange);
+    const [tempRange, setTempRange] = useState<DateRange | undefined>(defaultRange);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    
-    // Local Chart State
     const [pieType, setPieType] = useState<'income' | 'expense'>('expense');
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -61,20 +62,18 @@ export default function DashboardPage() {
         }
     }, []);
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsFilterOpen(false);
+                setTempRange(dateRange);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [dateRange]);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -82,14 +81,18 @@ export default function DashboardPage() {
         }).format(amount);
     };
 
-    // 1. Dapatkan data yang difilter berdasarkan Date Range
+    const formatDateLabel = (date?: Date) => {
+        if (!date) return '';
+        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
     const getFilteredFinances = useCallback((): Finance[] => {
         if (!finances.length) return [];
-        if (!dateRange.start || !dateRange.end) return finances;
+        if (!dateRange?.from || !dateRange?.to) return finances;
 
-        const start = new Date(dateRange.start);
+        const start = new Date(dateRange.from);
         start.setHours(0, 0, 0, 0);
-        const end = new Date(dateRange.end);
+        const end = new Date(dateRange.to);
         end.setHours(23, 59, 59, 999);
 
         return finances.filter(f => {
@@ -100,20 +103,17 @@ export default function DashboardPage() {
 
     const filteredFinances = getFilteredFinances();
 
-    // 2. Kalkulasi Summary Dinamis
     const currentSummary = {
         totalIncome: filteredFinances.filter(f => f.type == 'income').reduce((sum, f) => sum + Number(f.amount), 0),
         totalExpense: filteredFinances.filter(f => f.type == 'expense').reduce((sum, f) => sum + Number(f.amount), 0),
         get balance() { return this.totalIncome - this.totalExpense; }
     };
 
-    // 3. Olah Data untuk Chart (Auto detect Daily vs Monthly grouping)
     const getChartData = () => {
         if (!filteredFinances.length) return [];
-        
-        const startTime = new Date(dateRange.start).getTime();
-        const endTime = new Date(dateRange.end).getTime();
-        // Jika rentang <= 31 hari, tampilkan per hari. Jika lebih, per bulan.
+
+        const startTime = dateRange?.from?.getTime() ?? 0;
+        const endTime = dateRange?.to?.getTime() ?? 0;
         const isDailyGrouping = (endTime - startTime) <= 31 * 24 * 60 * 60 * 1000;
 
         if (isDailyGrouping) {
@@ -157,7 +157,7 @@ export default function DashboardPage() {
 
     return (
         <div>
-            {/* Header with Direct Date Filter */}
+            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-white">
@@ -167,32 +167,70 @@ export default function DashboardPage() {
                         Here's your financial overview
                     </p>
                 </div>
-                
+
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    {/* Direct Date Filter */}
+                    {/* Filter */}
                     <div className="relative" ref={dropdownRef}>
-                        <button 
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className={`flex items-center gap-2 px-4 py-2 border hover:bg-gray-800 text-sm font-medium rounded-lg transition ${isFilterOpen ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-900 border-gray-800 text-gray-300'}`}
+                        <button
+                            onClick={() => {
+                                setTempRange(dateRange);
+                                setIsFilterOpen(!isFilterOpen);
+                            }}
+                            className={`flex items-center gap-2 px-4 py-2 border text-sm font-medium rounded-lg transition ${
+                                isFilterOpen
+                                    ? 'bg-gray-800 border-blue-500 text-white'
+                                    : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                            }`}
                         >
-                            <Filter size={16} className="text-blue-400" />
-                            <span>Filter by Date</span>
+                            <CalendarDays size={16} className="text-blue-400 shrink-0" />
+                            <span className="hidden sm:inline">
+                                {dateRange?.from && dateRange?.to
+                                    ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}`
+                                    : 'Filter by Date'
+                                }
+                            </span>
                         </button>
 
                         {isFilterOpen && (
-                            <div className="absolute right-0 mt-2 w-64 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50 p-4">
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-[10px] text-gray-400 uppercase font-bold mb-1.5 block tracking-wider">Start Date</label>
-                                        <input type="date" value={dateRange.start} onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
-                                            className="w-full scheme-dark bg-gray-950 border border-gray-800 rounded-lg text-sm text-white px-3 py-2 outline-none focus:border-blue-500 transition-colors"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] text-gray-400 uppercase font-bold mb-1.5 block tracking-wider">End Date</label>
-                                        <input type="date" value={dateRange.end} onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
-                                            className="w-full scheme-dark bg-gray-950 border border-gray-800 rounded-lg text-sm text-white px-3 py-2 outline-none focus:border-blue-500 transition-colors"
-                                        />
+                            <div className="absolute right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
+                                <div className="p-4 rdp-dark">
+                                    <DayPicker
+                                        mode="range"
+                                        selected={tempRange}
+                                        onSelect={setTempRange}
+                                        numberOfMonths={2}
+                                        showOutsideDays={false}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
+                                    <span className="text-gray-400 text-xs font-medium">
+                                        {tempRange?.from && tempRange?.to
+                                            ? `${formatDateLabel(tempRange.from)} – ${formatDateLabel(tempRange.to)}`
+                                            : 'Select a date range'
+                                        }
+                                    </span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setTempRange(defaultRange);
+                                                setDateRange(defaultRange);
+                                                setIsFilterOpen(false);
+                                            }}
+                                            className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition"
+                                        >
+                                            Reset
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (tempRange?.from && tempRange?.to) {
+                                                    setDateRange(tempRange);
+                                                }
+                                                setIsFilterOpen(false);
+                                            }}
+                                            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition"
+                                        >
+                                            Apply
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -228,25 +266,21 @@ export default function DashboardPage() {
                     </div>
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                         <p className="font-quicksand text-gray-400 text-sm mb-1 uppercase tracking-wide">Income</p>
-                        <p className="text-green-400 text-2xl font-bold">
-                            {formatCurrency(currentSummary.totalIncome)}
-                        </p>
+                        <p className="text-green-400 text-2xl font-bold">{formatCurrency(currentSummary.totalIncome)}</p>
                     </div>
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                         <p className="font-quicksand text-gray-400 text-sm mb-1 uppercase tracking-wide">Expense</p>
-                        <p className="text-red-400 text-2xl font-bold">
-                            {formatCurrency(currentSummary.totalExpense)}
-                        </p>
+                        <p className="text-red-400 text-2xl font-bold">{formatCurrency(currentSummary.totalExpense)}</p>
                     </div>
                 </div>
             )}
 
-            {/* Area Chart & Pie Chart */}
+            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                 {/* PIE CHART */}
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-white font-semibold capitalize">Allocation</h3>
+                        <h3 className="text-white font-semibold">Allocation</h3>
                         <div className="flex bg-gray-800 rounded-lg p-1">
                             <button onClick={() => setPieType('income')}
                                 className={`px-3 py-1 text-xs font-bold rounded-md transition ${pieType == 'income' ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}
@@ -261,7 +295,7 @@ export default function DashboardPage() {
                             <>
                                 <ResponsiveContainer width="100%" height={180}>
                                     <PieChart>
-                                        <Pie key={`${refreshKey}-${dateRange.start}-${pieType}`}
+                                        <Pie key={`${refreshKey}-${dateRange?.from?.toISOString()}-${pieType}`}
                                             data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5}
                                             dataKey="value" nameKey="name" stroke="none" shape={renderPieShape}
                                         />
@@ -276,7 +310,7 @@ export default function DashboardPage() {
                                                             <span className="font-bold ml-2" style={{ color: p.payload.fill }}>{formatCurrency(p.payload.value)}</span>
                                                         </div>
                                                     </div>
-                                                )
+                                                );
                                             }
                                             return null;
                                         }} />
@@ -304,10 +338,7 @@ export default function DashboardPage() {
 
                 {/* AREA CHART */}
                 <div className="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-white font-semibold">Cash Flow Overview</h3>
-                    </div>
-
+                    <h3 className="text-white font-semibold mb-6">Cash Flow Overview</h3>
                     {isLoading ? (
                         <div className="h-64 bg-gray-800 rounded-lg animate-pulse" />
                     ) : chartData.length == 0 ? (
@@ -329,7 +360,7 @@ export default function DashboardPage() {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
                                 <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={{ stroke: '#374151' }} tickLine={false} dy={10} />
-                                <YAxis tickFormatter={(val) => val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}K` : val.toString()} tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} dx={-10} />
+                                <YAxis tickFormatter={(val) => val >= 1000000 ? `${(val/1000000).toFixed(1)}M` : val >= 1000 ? `${(val/1000).toFixed(0)}K` : val.toString()} tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} dx={-10} />
                                 <Tooltip content={({ active, payload, label }) => {
                                     if (active && payload && payload.length) {
                                         return (
@@ -347,7 +378,7 @@ export default function DashboardPage() {
                                                     ))}
                                                 </div>
                                             </div>
-                                        )
+                                        );
                                     }
                                     return null;
                                 }} cursor={{ stroke: '#374151', strokeWidth: 1, strokeDasharray: '4 4' }} />
