@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import axiosInstance from '@/lib/axios';
 import { Finance } from '@/lib/types';
-import { 
-    Search, Pencil, Trash2, 
+import {
+    Search, Pencil, Trash2,
     Plus, CalendarDays, X,
     ChevronsUpDown, ChevronUp, ChevronDown
 } from 'lucide-react';
@@ -39,8 +39,8 @@ export default function FinancePage() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [tempRange, setTempRange] = useState<DateRange | undefined>(undefined);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const fetchFinances = useCallback(async () => {
         setIsLoading(true);
@@ -80,7 +80,6 @@ export default function FinancePage() {
 
     const requestSort = (key: keyof Finance | 'amount_num') => {
         let direction: 'asc' | 'desc' | null = 'asc';
-        
         if (sortConfig.key == key) {
             if (sortConfig.direction == 'asc') {
                 direction = 'desc';
@@ -108,13 +107,11 @@ export default function FinancePage() {
         let result = finances.filter(f => {
             const query = searchQuery.toLowerCase();
             const matchesSearch = [f.type, f.category, f.description].some(field => field?.toLowerCase().includes(query))
-            
             if (!dateRange?.from || !dateRange?.to) return matchesSearch;
 
             const fDate = new Date(f.date);
             const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
             const end = new Date(dateRange.to); end.setHours(23, 59, 59, 999);
-            
             return matchesSearch && (fDate >= start && fDate <= end);
         });
 
@@ -122,7 +119,6 @@ export default function FinancePage() {
             result = [...result].sort((a, b) => {
                 let aValue: any = a[sortConfig.key as keyof Finance] || '';
                 let bValue: any = b[sortConfig.key as keyof Finance] || '';
-
                 if (sortConfig.key == 'amount_num') {
                     aValue = Number(a.amount);
                     bValue = Number(b.amount);
