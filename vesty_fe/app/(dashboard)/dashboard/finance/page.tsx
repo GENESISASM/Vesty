@@ -6,12 +6,14 @@ import { Finance } from '@/lib/types';
 import {
     Search, Pencil, Trash2,
     Plus, CalendarDays, X,
-    ChevronsUpDown, ChevronUp, ChevronDown
+    ChevronsUpDown, ChevronUp, ChevronDown,
+    Filter, ChevronRight, Check
 } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
 const CATEGORIES = ['Salary', 'Commission', 'Food', 'Transport', 'Shopping', 'Health', 'Maintenance', 'Entertainment', 'Bills', 'Liability','Other'];
+const TYPES = ['income', 'expense'];
 
 const defaultForm = {
     type: 'income' as 'income' | 'expense',
@@ -40,7 +42,14 @@ export default function FinancePage() {
     const [tempRange, setTempRange] = useState<DateRange | undefined>(undefined);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
+    const [isMultiFilterOpen, setIsMultiFilterOpen] = useState(false);
+    const [activeFilters, setActiveFilters] = useState<{ types: string[], categories: string[] }>({
+        types: [],
+        categories: []
+    });
+
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const multiFilterRef = useRef<HTMLDivElement>(null);
 
     const fetchFinances = useCallback(async () => {
         setIsLoading(true);
@@ -62,6 +71,9 @@ export default function FinancePage() {
                 setIsFilterOpen(false);
                 setTempRange(dateRange);
             }
+            if (multiFilterRef.current && !multiFilterRef.current.contains(event.target as Node)) {
+                setIsMultiFilterOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -81,11 +93,8 @@ export default function FinancePage() {
     const requestSort = (key: keyof Finance | 'amount_num') => {
         let direction: 'asc' | 'desc' | null = 'asc';
         if (sortConfig.key == key) {
-            if (sortConfig.direction == 'asc') {
-                direction = 'desc';
-            } else if (sortConfig.direction == 'desc') {
-                direction = null;
-            }
+            if (sortConfig.direction == 'asc') direction = 'desc';
+            else if (sortConfig.direction == 'desc') direction = null;
         }
 
         setSortConfig({ key: direction ? key : null, direction });
@@ -98,21 +107,36 @@ export default function FinancePage() {
             return <ChevronsUpDown size={14} className="ml-1 opacity-50" />;
         }
 
-        const Icons = { asc: ChevronUp, desc: ChevronDown,};
+        const Icons = { asc: ChevronUp, desc: ChevronDown };
         const Icon = Icons[direction];
         return <Icon size={14} className="ml-1 text-blue-500" />;
+    };
+
+    const toggleFilter = (group: 'types' | 'categories', value: string) => {
+        setActiveFilters(prev => {
+            const current = prev[group];
+            const next = current.includes(value) 
+                ? current.filter(item => item != value) 
+                : [...current, value];
+            return { ...prev, [group]: next };
+        });
     };
 
     const processedFinances = useMemo(() => {
         let result = finances.filter(f => {
             const query = searchQuery.toLowerCase();
             const matchesSearch = [f.type, f.category, f.description].some(field => field?.toLowerCase().includes(query))
-            if (!dateRange?.from || !dateRange?.to) return matchesSearch;
+            const matchesType = activeFilters.types.length == 0 || activeFilters.types.includes(f.type);
+            const matchesCategory = activeFilters.categories.length == 0 || activeFilters.categories.includes(f.category);
+
+            if (!dateRange?.from || !dateRange?.to) {
+                return matchesSearch && matchesType && matchesCategory;
+            }
 
             const fDate = new Date(f.date);
             const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
             const end = new Date(dateRange.to); end.setHours(23, 59, 59, 999);
-            return matchesSearch && (fDate >= start && fDate <= end);
+            return matchesSearch && matchesType && matchesCategory && (fDate >= start && fDate <= end);
         });
 
         if (sortConfig.key && sortConfig.direction) {
@@ -130,7 +154,14 @@ export default function FinancePage() {
             });
         }
         return result;
-    }, [finances, searchQuery, dateRange, sortConfig]);
+    }, [finances, searchQuery, dateRange, sortConfig, activeFilters]);
+
+    const handleCancel = () => {
+        setForm(defaultForm);
+        setShowForm(false);
+        setEditId(null);
+        setError(null);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -143,6 +174,7 @@ export default function FinancePage() {
             } else {
                 await axiosInstance.post('/finance/create', payload);
             }
+
             handleCancel();
             fetchFinances();
         } catch (err: any) {
@@ -168,19 +200,29 @@ export default function FinancePage() {
         try {
             await axiosInstance.delete(`/finance/delete/${id}`);
             fetchFinances();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setDeleteId(null);
-        }
+        } catch (err) { console.error(err); }
+        finally { setDeleteId(null); }
     };
 
-    const handleCancel = () => {
-        setForm(defaultForm);
-        setShowForm(false);
-        setEditId(null);
-        setError(null);
-    };
+    const totalActiveFilters = activeFilters.types.length + activeFilters.categories.length;
+    const CustomCheckbox = ({ checked, onChange, label }: { checked: boolean, onChange: () => void, label: string }) => (
+        <div 
+            className="flex items-center gap-3 px-3 py-2 hover:bg-gray-800/50 cursor-pointer transition-colors group"
+            onClick={(e) => {
+                e.preventDefault();
+                onChange();
+            }}
+        >
+            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                checked ? 'bg-blue-600 border-blue-600' : 'border-gray-600 group-hover:border-gray-400'
+            }`}>
+                {checked && <Check size={12} className="text-white" strokeWidth={4} />}
+            </div>
+            <span className={`text-sm transition-colors ${checked ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                {label}
+            </span>
+        </div>
+    );
 
     return (
         <div className="max-w-7xl mx-auto">
@@ -198,7 +240,73 @@ export default function FinancePage() {
                         />
                     </div>
 
-                    {/* Date Filter */}
+                    {/* Filter */}
+                    <div className="relative w-full md:w-auto" ref={multiFilterRef}>
+                        <button
+                            onClick={() => setIsMultiFilterOpen(!isMultiFilterOpen)}
+                            className={`flex items-center gap-2 px-4 py-2.5 border text-sm font-medium rounded-xl transition w-full ${
+                                isMultiFilterOpen || totalActiveFilters > 0
+                                ? 'bg-gray-800 border-blue-500 text-white' 
+                                : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                            }`}
+                        >
+                            <Filter size={16} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
+                            <span>Filters</span>
+                            {totalActiveFilters > 0 && (
+                                <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                    {totalActiveFilters}
+                                </span>
+                            )}
+                        </button>
+
+                        {isMultiFilterOpen && (
+                            <div className="absolute left-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50">
+                                {/* Type Filter */}
+                                <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
+                                    <span className="font-medium">Filter by Type</span>
+                                    <ChevronRight size={14} className="opacity-50" />
+                                    <div className="absolute left-[calc(100%+4px)] top-0 w-44 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200">
+                                        {TYPES.map(t => (
+                                            <CustomCheckbox 
+                                                key={t} 
+                                                checked={activeFilters.types.includes(t)} 
+                                                onChange={() => toggleFilter('types', t)} 
+                                                label={t.charAt(0).toUpperCase() + t.slice(1)} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Category Filtr */}
+                                <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
+                                    <span className="font-medium">Filter by Category</span>
+                                    <ChevronRight size={14} className="opacity-50" />
+                                    <div className="absolute left-[calc(100%+4px)] top-0 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2 max-h-72 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-left-2 duration-200">
+                                        {CATEGORIES.map(c => (
+                                            <CustomCheckbox 
+                                                key={c} 
+                                                checked={activeFilters.categories.includes(c)} 
+                                                onChange={() => toggleFilter('categories', c)} 
+                                                label={c} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {totalActiveFilters > 0 && (
+                                    <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
+                                        <button 
+                                            onClick={() => setActiveFilters({ types: [], categories: [] })}
+                                            className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-red-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-all duration-200"
+                                        >
+                                            Clear Filters
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                     <div className="relative w-full md:w-auto" ref={dropdownRef}>
                         <button
                             onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
@@ -206,7 +314,7 @@ export default function FinancePage() {
                                 isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
                             }`}
                         >
-                            <CalendarDays size={16} className="text-blue-400 shrink-0" />
+                            <CalendarDays size={16} className="text-gray-400 shrink-0" />
                             <span>{dateRange?.from && dateRange?.to ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}` : 'Date Filter'}</span>
                         </button>
 
@@ -268,9 +376,9 @@ export default function FinancePage() {
                             ) : processedFinances.length > 0 ? (
                                 processedFinances.map((f) => (
                                     <tr key={f.id} className="hover:bg-gray-800/30 transition-colors group">
-                                        <td className="px-6 py-4"><span className="text-gray-100 text-sm capitalize">{f.type}</span></td>
-                                        <td className="px-6 py-4"><p className="text-gray-100 text-sm">{f.category}</p></td>
-                                        <td className="px-6 py-4"><p className="text-gray-100 text-sm">{f.description || '-'}</p></td>
+                                        <td className="px-6 py-4 text-gray-100 text-sm capitalize">{f.type}</td>
+                                        <td className="px-6 py-4 text-gray-100 text-sm">{f.category}</td>
+                                        <td className="px-6 py-4 text-gray-100 text-sm">{f.description || '-'}</td>
                                         <td className="px-6 py-4 text-gray-100 text-sm">{formatDateLabel(new Date(f.date))}</td>
                                         <td className={`px-6 py-4 font-bold text-sm ${f.type == 'income' ? 'text-green-400' : 'text-red-400'}`}>
                                             {f.type == 'income' ? '+' : '-'}{formatCurrency(Number(f.amount))}
@@ -293,7 +401,7 @@ export default function FinancePage() {
                 </div>
             </div>
 
-            {/* Edit Form */}
+            {/* Form Modal */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
@@ -302,11 +410,9 @@ export default function FinancePage() {
                             <button onClick={handleCancel} className="text-gray-500 hover:text-white"><X size={20}/></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-5">
-                            <div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button type="button" onClick={() => setForm({ ...form, type: 'income' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'income' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Income</button>
-                                    <button type="button" onClick={() => setForm({ ...form, type: 'expense' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'expense' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Expense</button>
-                                </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button type="button" onClick={() => setForm({ ...form, type: 'income' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'income' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Income</button>
+                                <button type="button" onClick={() => setForm({ ...form, type: 'expense' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'expense' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Expense</button>
                             </div>
                             <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (IDR)" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 shadow-inner" required />
                             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500">
@@ -322,11 +428,11 @@ export default function FinancePage() {
                 </div>
             )}
 
-            {/* Delete */}
+            {/* Delete Modal */}
             {deleteId && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-                    <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-sm text-center">
-                        <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={30} /></div>
+                    <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl">
+                        <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"><Trash2 size={30} /></div>
                         <h3 className="text-white font-bold text-lg mb-2">Are you sure?</h3>
                         <p className="text-gray-500 text-sm mb-8">This transaction will be permanently removed</p>
                         <div className="grid grid-cols-2 gap-3">
