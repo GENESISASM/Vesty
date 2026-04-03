@@ -81,10 +81,10 @@ export default function FinancePage() {
     const requestSort = (key: keyof Finance | 'amount_num') => {
         let direction: 'asc' | 'desc' | null = 'asc';
         
-        if (sortConfig.key === key) {
-            if (sortConfig.direction === 'asc') {
+        if (sortConfig.key == key) {
+            if (sortConfig.direction == 'asc') {
                 direction = 'desc';
-            } else if (sortConfig.direction === 'desc') {
+            } else if (sortConfig.direction == 'desc') {
                 direction = null;
             }
         }
@@ -93,16 +93,21 @@ export default function FinancePage() {
     };
 
     const getSortIcon = (key: keyof Finance | 'amount_num') => {
-        if (sortConfig.key !== key) return <ChevronsUpDown size={14} className="ml-1 opacity-20" />;
-        if (sortConfig.direction === 'asc') return <ChevronUp size={14} className="ml-1 text-blue-500" />;
-        if (sortConfig.direction === 'desc') return <ChevronDown size={14} className="ml-1 text-blue-500" />;
-        return <ChevronsUpDown size={14} className="ml-1 opacity-20" />;
+        const isSelected = sortConfig.key == key;
+        const direction = sortConfig.direction;
+        if (!isSelected || !direction) {
+            return <ChevronsUpDown size={14} className="ml-1 opacity-50" />;
+        }
+
+        const Icons = { asc: ChevronUp, desc: ChevronDown,};
+        const Icon = Icons[direction];
+        return <Icon size={14} className="ml-1 text-blue-500" />;
     };
 
     const processedFinances = useMemo(() => {
         let result = finances.filter(f => {
-            const matchesSearch = f.category.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                f.description?.toLowerCase().includes(searchQuery.toLowerCase());
+            const query = searchQuery.toLowerCase();
+            const matchesSearch = [f.type, f.category, f.description].some(field => field?.toLowerCase().includes(query))
             
             if (!dateRange?.from || !dateRange?.to) return matchesSearch;
 
@@ -118,13 +123,13 @@ export default function FinancePage() {
                 let aValue: any = a[sortConfig.key as keyof Finance] || '';
                 let bValue: any = b[sortConfig.key as keyof Finance] || '';
 
-                if (sortConfig.key === 'amount_num') {
+                if (sortConfig.key == 'amount_num') {
                     aValue = Number(a.amount);
                     bValue = Number(b.amount);
                 }
 
-                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                if (aValue < bValue) return sortConfig.direction == 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction == 'asc' ? 1 : -1;
                 return 0;
             });
         }
@@ -190,13 +195,14 @@ export default function FinancePage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                         <input 
                             type="text"
-                            placeholder="Search details..."
+                            placeholder="Search"
                             className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
 
+                    {/* Date Filter */}
                     <div className="relative w-full md:w-auto" ref={dropdownRef}>
                         <button
                             onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
@@ -301,7 +307,6 @@ export default function FinancePage() {
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2 text-center">Select Type</label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button type="button" onClick={() => setForm({ ...form, type: 'income' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'income' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Income</button>
                                     <button type="button" onClick={() => setForm({ ...form, type: 'expense' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'expense' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Expense</button>
@@ -327,7 +332,7 @@ export default function FinancePage() {
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-sm text-center">
                         <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={30} /></div>
                         <h3 className="text-white font-bold text-lg mb-2">Are you sure?</h3>
-                        <p className="text-gray-500 text-sm mb-8">This transaction will be permanently removed.</p>
+                        <p className="text-gray-500 text-sm mb-8">This transaction will be permanently removed</p>
                         <div className="grid grid-cols-2 gap-3">
                             <button onClick={() => setDeleteId(null)} className="py-3 bg-gray-800 text-white rounded-xl font-bold">Cancel</button>
                             <button onClick={() => handleDelete(deleteId)} className="py-3 bg-red-600 text-white rounded-xl font-bold">Delete</button>
