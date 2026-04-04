@@ -43,13 +43,14 @@ export default function FinancePage() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
     const [isMultiFilterOpen, setIsMultiFilterOpen] = useState(false);
+    const [activeSubmenu, setActiveSubmenu] = useState<'type' | 'category' | null>(null);
     const [activeFilters, setActiveFilters] = useState<{ types: string[], categories: string[] }>({
         types: [],
         categories: []
     });
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
-    const formDateRef = useRef<HTMLDivElement>(null);
 
+    const formDateRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +76,7 @@ export default function FinancePage() {
             }
             if (multiFilterRef.current && !multiFilterRef.current.contains(event.target as Node)) {
                 setIsMultiFilterOpen(false);
+                setActiveSubmenu(null);
             }
             if (formDateRef.current && !formDateRef.current.contains(event.target as Node)) {
                 setIsFormDatePickerOpen(false);
@@ -101,17 +103,13 @@ export default function FinancePage() {
             if (sortConfig.direction == 'asc') direction = 'desc';
             else if (sortConfig.direction == 'desc') direction = null;
         }
-
         setSortConfig({ key: direction ? key : null, direction });
     };
 
     const getSortIcon = (key: keyof Finance | 'amount_num') => {
         const isSelected = sortConfig.key == key;
         const direction = sortConfig.direction;
-        if (!isSelected || !direction) {
-            return <ChevronsUpDown size={14} className="ml-1 opacity-50" />;
-        }
-
+        if (!isSelected || !direction) return <ChevronsUpDown size={14} className="ml-1 opacity-50" />;
         const Icons = { asc: ChevronUp, desc: ChevronDown };
         const Icon = Icons[direction];
         return <Icon size={14} className="ml-1 text-blue-500" />;
@@ -134,9 +132,7 @@ export default function FinancePage() {
             const matchesType = activeFilters.types.length == 0 || activeFilters.types.includes(f.type);
             const matchesCategory = activeFilters.categories.length == 0 || activeFilters.categories.includes(f.category);
 
-            if (!dateRange?.from || !dateRange?.to) {
-                return matchesSearch && matchesType && matchesCategory;
-            }
+            if (!dateRange?.from || !dateRange?.to) return matchesSearch && matchesType && matchesCategory;
 
             const fDate = new Date(f.date);
             const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
@@ -152,7 +148,6 @@ export default function FinancePage() {
                     aValue = Number(a.amount);
                     bValue = Number(b.amount);
                 }
-
                 if (aValue < bValue) return sortConfig.direction == 'asc' ? -1 : 1;
                 if (aValue > bValue) return sortConfig.direction == 'asc' ? 1 : -1;
                 return 0;
@@ -174,12 +169,8 @@ export default function FinancePage() {
         setError(null);
         try {
             const payload = { ...form, amount: Number(form.amount) };
-            if (editId) {
-                await axiosInstance.put(`/finance/update/${editId}`, payload);
-            } else {
-                await axiosInstance.post('/finance/create', payload);
-            }
-
+            if (editId) await axiosInstance.put(`/finance/update/${editId}`, payload);
+            else await axiosInstance.post('/finance/create', payload);
             handleCancel();
             fetchFinances();
         } catch (err: any) {
@@ -210,15 +201,16 @@ export default function FinancePage() {
     };
 
     const totalActiveFilters = activeFilters.types.length + activeFilters.categories.length;
+
     const CustomCheckbox = ({ checked, onChange, label }: { checked: boolean, onChange: () => void, label: string }) => (
         <div 
-            className="flex items-center gap-3 px-3 py-2 hover:bg-gray-800/50 cursor-pointer transition-colors group"
+            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group"
             onClick={(e) => {
-                e.preventDefault();
+                e.stopPropagation();
                 onChange();
             }}
         >
-            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+            <div className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-all ${
                 checked ? 'bg-blue-600 border-blue-600' : 'border-gray-600 group-hover:border-gray-400'
             }`}>
                 {checked && <Check size={12} className="text-white" strokeWidth={4} />}
@@ -272,10 +264,13 @@ export default function FinancePage() {
                     )}
                 </div>
 
-                {/* Filter */}
+                {/* Multiple Filter */}
                 <div className="relative shrink-0" ref={multiFilterRef}>
                     <button
-                        onClick={() => setIsMultiFilterOpen(!isMultiFilterOpen)}
+                        onClick={() => {
+                            setIsMultiFilterOpen(!isMultiFilterOpen);
+                            setActiveSubmenu(null);
+                        }}
                         className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
                             isMultiFilterOpen || totalActiveFilters > 0
                             ? 'bg-gray-800 border-blue-500 text-white' 
@@ -292,28 +287,46 @@ export default function FinancePage() {
                     </button>
 
                     {isMultiFilterOpen && (
-                        <div className="absolute right-0 md:left-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50">
-                            <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
+                        <div className="absolute right-0 md:left-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
+                            {/* Type Submenu */}
+                            <div 
+                                className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                onClick={() => setActiveSubmenu(activeSubmenu == 'type' ? null : 'type')}
+                            >
                                 <span className="font-medium">Type</span>
-                                <ChevronRight size={14} className="opacity-50" />
-                                <div className="absolute right-full md:left-full top-0 mr-1 md:mr-0 md:ml-1 w-44 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2">
+                                <ChevronRight size={14} className={`opacity-50 transition-transform ${activeSubmenu == 'type' ? 'rotate-90 md:rotate-0' : ''}`} />
+                                
+                                <div className={`absolute right-full md:left-full top-0 mr-1 md:mr-0 md:ml-1 w-44 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl py-2 ${activeSubmenu == 'type' ? 'block' : 'hidden group-hover:block'}`}>
                                     {TYPES.map(t => (
                                         <CustomCheckbox key={t} checked={activeFilters.types.includes(t)} onChange={() => toggleFilter('types', t)} label={t.charAt(0).toUpperCase() + t.slice(1)} />
                                     ))}
                                 </div>
                             </div>
-                            <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
+
+                            {/* Category Submenu */}
+                            <div 
+                                className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                onClick={() => setActiveSubmenu(activeSubmenu == 'category' ? null : 'category')}
+                            >
                                 <span className="font-medium">Category</span>
-                                <ChevronRight size={14} className="opacity-50" />
-                                <div className="absolute right-full md:left-full top-0 mr-1 md:mr-0 md:ml-1 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2 max-h-72 overflow-y-auto custom-scrollbar">
+                                <ChevronRight size={14} className={`opacity-50 transition-transform ${activeSubmenu == 'category' ? 'rotate-90 md:rotate-0' : ''}`} />
+                                
+                                <div className={`absolute right-full md:left-full top-0 mr-1 md:mr-0 md:ml-1 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl py-2 max-h-72 overflow-y-auto custom-scrollbar ${activeSubmenu == 'category' ? 'block' : 'hidden group-hover:block'}`}>
                                     {CATEGORIES.map(c => (
                                         <CustomCheckbox key={c} checked={activeFilters.categories.includes(c)} onChange={() => toggleFilter('categories', c)} label={c} />
                                     ))}
                                 </div>
                             </div>
+
                             {totalActiveFilters > 0 && (
                                 <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
-                                    <button onClick={() => setActiveFilters({ types: [], categories: [] })} className="w-full text-center py-2 text-xs font-semibold text-red-400 hover:text-red-300">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveFilters({ types: [], categories: [] });
+                                        }} 
+                                        className="w-full text-center py-2 text-xs font-semibold text-red-400 hover:text-red-300"
+                                    >
                                         Clear All
                                     </button>
                                 </div>
@@ -337,7 +350,7 @@ export default function FinancePage() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-800/50 text-gray-300 text-[13px] uppercase tracking-wider border-b border-gray-800 select-none">
+                            <tr className="bg-gray-800/50 text-gray-300 text-[13px] uppercase tracking-wider border-b border-gray-800 select-none text-center">
                                 <th onClick={() => requestSort('type')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition group">
                                     <div className="flex items-center justify-center">Type {getSortIcon('type')}</div>
                                 </th>
@@ -373,7 +386,7 @@ export default function FinancePage() {
                                         <td className={`px-6 py-4 font-bold text-sm ${f.type == 'income' ? 'text-green-400' : 'text-red-400'}`}>
                                             {f.type == 'income' ? '+' : '-'}{formatCurrency(Number(f.amount))}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center gap-1">
                                                 <button onClick={() => handleEdit(f)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition"><Pencil size={16} /></button>
                                                 <button onClick={() => setDeleteId(f.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition"><Trash2 size={16} /></button>
@@ -404,43 +417,22 @@ export default function FinancePage() {
                                 <button type="button" onClick={() => setForm({ ...form, type: 'income' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'income' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Income</button>
                                 <button type="button" onClick={() => setForm({ ...form, type: 'expense' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'expense' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Expense</button>
                             </div>
-                            
                             <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (IDR)" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 shadow-inner" required />
-                            
                             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500">
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
-                            
                             <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" />
-                            
                             <div className="relative" ref={formDateRef}>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsFormDatePickerOpen(!isFormDatePickerOpen)}
-                                    className="w-full bg-gray-800 text-left px-4 py-3 rounded-xl text-white text-sm flex items-center justify-between border border-transparent focus:border-blue-500 transition"
-                                >
-                                    <span className={form.date ? "text-white" : "text-gray-500"}>
-                                        {form.date ? formatDateLabel(new Date(form.date)) : "Select Date"}
-                                    </span>
+                                <button type="button" onClick={() => setIsFormDatePickerOpen(!isFormDatePickerOpen)} className="w-full bg-gray-800 text-left px-4 py-3 rounded-xl text-white text-sm flex items-center justify-between border border-transparent focus:border-blue-500 transition">
+                                    <span className={form.date ? "text-white" : "text-gray-500"}>{form.date ? formatDateLabel(new Date(form.date)) : "Select Date"}</span>
                                     <CalendarDays size={18} className="text-gray-500" />
                                 </button>
-
                                 {isFormDatePickerOpen && (
                                     <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                        <DayPicker
-                                            mode="single"
-                                            selected={new Date(form.date)}
-                                            onSelect={(date) => {
-                                                if (date) {
-                                                    setForm({ ...form, date: date.toISOString().split('T')[0] });
-                                                    setIsFormDatePickerOpen(false);
-                                                }
-                                            }}
-                                        />
+                                        <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: date.toISOString().split('T')[0] }); setIsFormDatePickerOpen(false); }}} />
                                     </div>
                                 )}
                             </div>
-
                             <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/30 transition">
                                 {isSubmitting ? 'Processing...' : 'Save Transaction'}
                             </button>
@@ -449,7 +441,7 @@ export default function FinancePage() {
                 </div>
             )}
 
-            {/* Delete Modal */}
+            {/* Delete Transaction */}
             {deleteId && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-100 px-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl">
