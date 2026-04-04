@@ -76,6 +76,9 @@ export default function FinancePage() {
             if (multiFilterRef.current && !multiFilterRef.current.contains(event.target as Node)) {
                 setIsMultiFilterOpen(false);
             }
+            if (formDateRef.current && !formDateRef.current.contains(event.target as Node)) {
+                setIsFormDatePickerOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -228,121 +231,105 @@ export default function FinancePage() {
 
     return (
         <div className="max-w-7xl mx-auto">
-            {/* Header Controls */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto order-2 md:order-1">
-                    <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                        <input 
-                            type="text"
-                            placeholder="Search"
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Date Filter */}
-                    <div className="relative w-full md:w-auto" ref={dropdownRef}>
-                        <button
-                            onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
-                            className={`flex items-center justify-between gap-3 px-4 py-2.5 border text-sm font-medium rounded-xl transition w-full ${
-                                isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                            }`}
-                        >
-                            <CalendarDays size={16} className="text-gray-400 shrink-0" />
-                            <span>{dateRange?.from && dateRange?.to ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}` : 'Date Filter'}</span>
-                        </button>
-
-                        {isFilterOpen && (
-                            <div className="absolute left-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
-                                <div className="p-2.5 rdp-dark">
-                                    <DayPicker mode="range" selected={tempRange} onSelect={setTempRange} numberOfMonths={2} showOutsideDays={false} />
-                                </div>
-                                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
-                                    <span className="text-gray-400 text-xs font-medium">{tempRange?.from && tempRange?.to ? `${formatDateLabel(tempRange.from)} – ${formatDateLabel(tempRange.to)}` : 'Select range'}</span>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => { setTempRange(undefined); setDateRange(undefined); setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 rounded-lg transition">Reset</button>
-                                        <button onClick={() => { if (tempRange?.from && tempRange?.to) { setDateRange(tempRange); } setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg transition">Apply</button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Filter */}
-                    <div className="relative w-full md:w-auto" ref={multiFilterRef}>
-                        <button
-                            onClick={() => setIsMultiFilterOpen(!isMultiFilterOpen)}
-                            className={`flex items-center gap-2 px-4 py-2.5 border text-sm font-medium rounded-xl transition w-full ${
-                                isMultiFilterOpen || totalActiveFilters > 0
-                                ? 'bg-gray-800 border-blue-500 text-white' 
-                                : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                            }`}
-                        >
-                            <Filter size={16} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
-                            <span>Filters</span>
-                            {totalActiveFilters > 0 && (
-                                <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
-                                    {totalActiveFilters}
-                                </span>
-                            )}
-                        </button>
-
-                        {isMultiFilterOpen && (
-                            <div className="absolute left-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50">
-                                {/* Type Filter */}
-                                <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
-                                    <span className="font-medium">Filter by Type</span>
-                                    <ChevronRight size={14} className="opacity-50" />
-                                    <div className="absolute left-[calc(100%+4px)] top-0 w-44 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2 overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200">
-                                        {TYPES.map(t => (
-                                            <CustomCheckbox 
-                                                key={t} 
-                                                checked={activeFilters.types.includes(t)} 
-                                                onChange={() => toggleFilter('types', t)} 
-                                                label={t.charAt(0).toUpperCase() + t.slice(1)} 
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Category Filtr */}
-                                <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
-                                    <span className="font-medium">Filter by Category</span>
-                                    <ChevronRight size={14} className="opacity-50" />
-                                    <div className="absolute left-[calc(100%+4px)] top-0 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2 max-h-72 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-left-2 duration-200">
-                                        {CATEGORIES.map(c => (
-                                            <CustomCheckbox 
-                                                key={c} 
-                                                checked={activeFilters.categories.includes(c)} 
-                                                onChange={() => toggleFilter('categories', c)} 
-                                                label={c} 
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {totalActiveFilters > 0 && (
-                                    <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
-                                        <button 
-                                            onClick={() => setActiveFilters({ types: [], categories: [] })}
-                                            className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-red-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-all duration-200"
-                                        >
-                                            Clear Filters
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>                    
+            {/* Header */}
+            <div className="flex items-center mb-6 gap-2">
+                {/* Search */}
+                <div className="relative grow min-w-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                    <input 
+                        type="text"
+                        placeholder="Search"
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
 
-                <div className="w-full md:w-auto order-1 md:order-2 flex justify-end">
-                    <button onClick={() => setShowForm(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20">
-                        <Plus size={18} /> Add Transaction
+                {/* Date Filter */}
+                <div className="relative shrink-0" ref={dropdownRef}>
+                    <button
+                        onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
+                            isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                        }`}
+                    >
+                        <CalendarDays size={18} className="text-gray-400" />
+                        <span className="hidden md:inline">{dateRange?.from && dateRange?.to ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}` : 'Date'}</span>
                     </button>
+
+                    {isFilterOpen && (
+                        <div className="absolute right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
+                            <div className="p-2.5 rdp-dark">
+                                <DayPicker mode="range" selected={tempRange} onSelect={setTempRange} numberOfMonths={window.innerWidth < 640 ? 1 : 2} showOutsideDays={false} />
+                            </div>
+                            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
+                                <div className="flex gap-2 ml-auto">
+                                    <button onClick={() => { setTempRange(undefined); setDateRange(undefined); setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 rounded-lg">Reset</button>
+                                    <button onClick={() => { if (tempRange?.from && tempRange?.to) { setDateRange(tempRange); } setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
+                {/* Filter */}
+                <div className="relative shrink-0" ref={multiFilterRef}>
+                    <button
+                        onClick={() => setIsMultiFilterOpen(!isMultiFilterOpen)}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
+                            isMultiFilterOpen || totalActiveFilters > 0
+                            ? 'bg-gray-800 border-blue-500 text-white' 
+                            : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                        }`}
+                    >
+                        <Filter size={18} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
+                        <span className="hidden md:inline">Filters</span>
+                        {totalActiveFilters > 0 && (
+                            <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                {totalActiveFilters}
+                            </span>
+                        )}
+                    </button>
+
+                    {isMultiFilterOpen && (
+                        <div className="absolute right-0 md:left-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50">
+                            <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
+                                <span className="font-medium">Type</span>
+                                <ChevronRight size={14} className="opacity-50" />
+                                <div className="absolute right-full md:left-full top-0 mr-1 md:mr-0 md:ml-1 w-44 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2">
+                                    {TYPES.map(t => (
+                                        <CustomCheckbox key={t} checked={activeFilters.types.includes(t)} onChange={() => toggleFilter('types', t)} label={t.charAt(0).toUpperCase() + t.slice(1)} />
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
+                                <span className="font-medium">Category</span>
+                                <ChevronRight size={14} className="opacity-50" />
+                                <div className="absolute right-full md:left-full top-0 mr-1 md:mr-0 md:ml-1 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2 max-h-72 overflow-y-auto custom-scrollbar">
+                                    {CATEGORIES.map(c => (
+                                        <CustomCheckbox key={c} checked={activeFilters.categories.includes(c)} onChange={() => toggleFilter('categories', c)} label={c} />
+                                    ))}
+                                </div>
+                            </div>
+                            {totalActiveFilters > 0 && (
+                                <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
+                                    <button onClick={() => setActiveFilters({ types: [], categories: [] })} className="w-full text-center py-2 text-xs font-semibold text-red-400 hover:text-red-300">
+                                        Clear All
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Add Transaction */}
+                <button 
+                    onClick={() => setShowForm(true)} 
+                    className="shrink-0 flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20"
+                >
+                    <Plus size={18} />
+                    <span className="hidden md:inline">Add Transaction</span>
+                </button>
             </div>
 
             {/* Table Section */}
@@ -406,7 +393,7 @@ export default function FinancePage() {
 
             {/* Form Input Transaction */}
             {showForm && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-100 px-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-white font-bold text-xl">{editId ? 'Edit Transaction' : 'New Transaction'}</h3>
@@ -439,7 +426,7 @@ export default function FinancePage() {
                                 </button>
 
                                 {isFormDatePickerOpen && (
-                                    <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
                                         <DayPicker
                                             mode="single"
                                             selected={new Date(form.date)}
@@ -464,7 +451,7 @@ export default function FinancePage() {
 
             {/* Delete Modal */}
             {deleteId && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-100 px-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl">
                         <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"><Trash2 size={30} /></div>
                         <h3 className="text-white font-bold text-lg mb-2">Are you sure?</h3>
