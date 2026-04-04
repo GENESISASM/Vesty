@@ -222,7 +222,7 @@ export default function FinancePage() {
     );
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
             {/* Header */}
             <div className="flex items-center mb-6 gap-2">
                 {/* Search */}
@@ -250,9 +250,15 @@ export default function FinancePage() {
                     </button>
 
                     {isFilterOpen && (
-                        <div className="absolute right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
-                            <div className="p-2.5 rdp-dark">
-                                <DayPicker mode="range" selected={tempRange} onSelect={setTempRange} numberOfMonths={window.innerWidth < 640 ? 1 : 2} showOutsideDays={false} />
+                        <div className="absolute left-[-15] -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden w-[90vw] sm:w-max">
+                            <div className="p-2.5 rdp-dark flex justify-center">
+                                <DayPicker
+                                    mode="range"
+                                    selected={tempRange}
+                                    onSelect={setTempRange}
+                                    numberOfMonths={window.innerWidth < 640 ? 1 : 2}
+                                    showOutsideDays={false}
+                                />
                             </div>
                             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
                                 <div className="flex gap-2 ml-auto">
@@ -287,31 +293,49 @@ export default function FinancePage() {
                     </button>
 
                     {isMultiFilterOpen && (
-                        <div className="absolute right-0 md:left-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
-                            {/* Type Submenu */}
-                            <div 
-                                className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
-                                onClick={() => setActiveSubmenu(activeSubmenu == 'type' ? null : 'type')}
-                            >
-                                <span className="font-medium">Type</span>
-                                <ChevronRight size={14} className={`opacity-50 transition-transform ${activeSubmenu == 'type' ? 'rotate-90 md:rotate-0' : ''}`} />
+                        <div className="absolute right-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
+                            {/* Type Filter */}
+                            <div className="relative group">
+                                <div 
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'type' ? null : 'type');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Type</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'type' ? 'rotate-90' : ''}`} />
+                                </div>
                                 
-                                <div className={`absolute right-full md:left-full top-0 mr-1 md:mr-0 md:ml-1 w-44 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl py-2 ${activeSubmenu == 'type' ? 'block' : 'hidden group-hover:block'}`}>
+                                <div className={`
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
+                                    ${activeSubmenu == 'type' ? 'block' : 'hidden md:group-hover:block'}
+                                `}>
                                     {TYPES.map(t => (
                                         <CustomCheckbox key={t} checked={activeFilters.types.includes(t)} onChange={() => toggleFilter('types', t)} label={t.charAt(0).toUpperCase() + t.slice(1)} />
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Category Submenu */}
-                            <div 
-                                className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
-                                onClick={() => setActiveSubmenu(activeSubmenu == 'category' ? null : 'category')}
-                            >
-                                <span className="font-medium">Category</span>
-                                <ChevronRight size={14} className={`opacity-50 transition-transform ${activeSubmenu == 'category' ? 'rotate-90 md:rotate-0' : ''}`} />
+                            {/* Category Filter */}
+                            <div className="relative group border-t border-gray-800/50 md:border-t-0">
+                                <div 
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'category' ? null : 'category');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Category</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'category' ? 'rotate-90' : ''}`} />
+                                </div>
                                 
-                                <div className={`absolute right-full md:left-full top-0 mr-1 md:mr-0 md:ml-1 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl py-2 max-h-72 overflow-y-auto custom-scrollbar ${activeSubmenu == 'category' ? 'block' : 'hidden group-hover:block'}`}>
+                                <div className={`
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-52 py-1 max-h-60 overflow-y-auto custom-scrollbar
+                                    ${activeSubmenu == 'category' ? 'block' : 'hidden md:group-hover:block'}
+                                `}>
                                     {CATEGORIES.map(c => (
                                         <CustomCheckbox key={c} checked={activeFilters.categories.includes(c)} onChange={() => toggleFilter('categories', c)} label={c} />
                                     ))}
