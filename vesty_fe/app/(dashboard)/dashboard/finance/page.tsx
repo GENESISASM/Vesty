@@ -47,6 +47,8 @@ export default function FinancePage() {
         types: [],
         categories: []
     });
+    const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
+    const formDateRef = useRef<HTMLDivElement>(null);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
@@ -240,6 +242,34 @@ export default function FinancePage() {
                         />
                     </div>
 
+                    {/* Date Filter */}
+                    <div className="relative w-full md:w-auto" ref={dropdownRef}>
+                        <button
+                            onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
+                            className={`flex items-center justify-between gap-3 px-4 py-2.5 border text-sm font-medium rounded-xl transition w-full ${
+                                isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                            }`}
+                        >
+                            <CalendarDays size={16} className="text-gray-400 shrink-0" />
+                            <span>{dateRange?.from && dateRange?.to ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}` : 'Date Filter'}</span>
+                        </button>
+
+                        {isFilterOpen && (
+                            <div className="absolute left-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
+                                <div className="p-2.5 rdp-dark">
+                                    <DayPicker mode="range" selected={tempRange} onSelect={setTempRange} numberOfMonths={2} showOutsideDays={false} />
+                                </div>
+                                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
+                                    <span className="text-gray-400 text-xs font-medium">{tempRange?.from && tempRange?.to ? `${formatDateLabel(tempRange.from)} – ${formatDateLabel(tempRange.to)}` : 'Select range'}</span>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => { setTempRange(undefined); setDateRange(undefined); setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 rounded-lg transition">Reset</button>
+                                        <button onClick={() => { if (tempRange?.from && tempRange?.to) { setDateRange(tempRange); } setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg transition">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Filter */}
                     <div className="relative w-full md:w-auto" ref={multiFilterRef}>
                         <button
@@ -305,34 +335,7 @@ export default function FinancePage() {
                                 )}
                             </div>
                         )}
-                    </div>
-
-                    <div className="relative w-full md:w-auto" ref={dropdownRef}>
-                        <button
-                            onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
-                            className={`flex items-center justify-between gap-3 px-4 py-2.5 border text-sm font-medium rounded-xl transition w-full ${
-                                isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                            }`}
-                        >
-                            <CalendarDays size={16} className="text-gray-400 shrink-0" />
-                            <span>{dateRange?.from && dateRange?.to ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}` : 'Date Filter'}</span>
-                        </button>
-
-                        {isFilterOpen && (
-                            <div className="absolute left-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden sm:w-max max-w-[95vw]">
-                                <div className="p-2.5 rdp-dark">
-                                    <DayPicker mode="range" selected={tempRange} onSelect={setTempRange} numberOfMonths={2} showOutsideDays={false} />
-                                </div>
-                                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
-                                    <span className="text-gray-400 text-xs font-medium">{tempRange?.from && tempRange?.to ? `${formatDateLabel(tempRange.from)} – ${formatDateLabel(tempRange.to)}` : 'Select range'}</span>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => { setTempRange(undefined); setDateRange(undefined); setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 rounded-lg transition">Reset</button>
-                                        <button onClick={() => { if (tempRange?.from && tempRange?.to) { setDateRange(tempRange); } setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg transition">Apply</button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    </div>                    
                 </div>
 
                 <div className="w-full md:w-auto order-1 md:order-2 flex justify-end">
@@ -401,7 +404,7 @@ export default function FinancePage() {
                 </div>
             </div>
 
-            {/* Form Modal */}
+            {/* Form Input Transaction */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
@@ -414,12 +417,43 @@ export default function FinancePage() {
                                 <button type="button" onClick={() => setForm({ ...form, type: 'income' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'income' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Income</button>
                                 <button type="button" onClick={() => setForm({ ...form, type: 'expense' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'expense' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Expense</button>
                             </div>
+                            
                             <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (IDR)" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 shadow-inner" required />
+                            
                             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500">
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
+                            
                             <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" />
-                            <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" required />
+                            
+                            <div className="relative" ref={formDateRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsFormDatePickerOpen(!isFormDatePickerOpen)}
+                                    className="w-full bg-gray-800 text-left px-4 py-3 rounded-xl text-white text-sm flex items-center justify-between border border-transparent focus:border-blue-500 transition"
+                                >
+                                    <span className={form.date ? "text-white" : "text-gray-500"}>
+                                        {form.date ? formatDateLabel(new Date(form.date)) : "Select Date"}
+                                    </span>
+                                    <CalendarDays size={18} className="text-gray-500" />
+                                </button>
+
+                                {isFormDatePickerOpen && (
+                                    <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
+                                        <DayPicker
+                                            mode="single"
+                                            selected={new Date(form.date)}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setForm({ ...form, date: date.toISOString().split('T')[0] });
+                                                    setIsFormDatePickerOpen(false);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
                             <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/30 transition">
                                 {isSubmitting ? 'Processing...' : 'Save Transaction'}
                             </button>
