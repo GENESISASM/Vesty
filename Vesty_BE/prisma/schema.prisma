@@ -18,6 +18,7 @@ model User {
 
   finances   Finance[]
   stocks     Stock[]
+  debts      Debt[]
 
   @@map("users")
 }
@@ -66,4 +67,68 @@ model StockHistory {
   stock       Stock    @relation(fields: [stock_id], references: [id])
 
   @@map("stock_histories")
+}
+
+// DEBT
+model Debt {
+  id           String        @id @default(uuid())
+  user_id      String
+  debtor_name  String
+  type         String        // 'money' | 'item'
+  status       String        @default("unpaid") // 'unpaid' | 'partial' | 'paid'
+  notes        String?
+  date         DateTime
+  due_date     DateTime?
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  user         User          @relation(fields: [user_id], references: [id])
+  debt_items   DebtItem[]
+  debt_money   DebtMoney?
+  debt_payments DebtPayment[]
+
+  @@map("debts")
+}
+
+// DEBT ITEM
+model DebtItem {
+  id             String   @id @default(uuid())
+  debt_id        String
+  item_name      String
+  quantity       Int
+  unit           String
+  price_per_unit Decimal? @db.Decimal(15, 2)
+  total_price    Decimal? @db.Decimal(15, 2)
+  created_at     DateTime @default(now())
+
+  debt           Debt     @relation(fields: [debt_id], references: [id])
+
+  @@map("debt_items")
+}
+
+// DEBT MONEY DETAIL
+model DebtMoney {
+  id         String   @id @default(uuid())
+  debt_id    String   @unique
+  amount     Decimal  @db.Decimal(15, 2)
+  created_at DateTime @default(now())
+
+  debt       Debt     @relation(fields: [debt_id], references: [id])
+
+  @@map("debt_money")
+}
+
+// DEBT PAYMENT HISTORY
+model DebtPayment {
+  id           String   @id @default(uuid())
+  debt_id      String
+  amount       Decimal  @db.Decimal(15, 2)
+  payment_type String   // 'money' | 'item'
+  notes        String?
+  date         DateTime
+  created_at   DateTime @default(now())
+
+  debt         Debt     @relation(fields: [debt_id], references: [id])
+
+  @@map("debt_payments")
 }
