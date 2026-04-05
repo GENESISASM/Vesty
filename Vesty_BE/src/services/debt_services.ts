@@ -67,7 +67,7 @@ export class DebtService {
                                 user_id: userId,
                                 item_name: item.item_name,
                                 unit: item.unit,
-                                current_stock: 0,
+                                current_stock: 100,
                             },
                         });
                     }
