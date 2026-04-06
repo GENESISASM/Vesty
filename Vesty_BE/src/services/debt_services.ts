@@ -146,40 +146,57 @@ export class DebtService {
     }) {
         const debt = await this.getDebtById(userId, debtId);
 
-        const payment = await prisma.debtPayment.create({
-        data: {
-            debt_id: debtId,
-            amount: payload.amount,
-            payment_type: payload.payment_type,
-            notes: payload.notes ?? null,
-            date: new Date(payload.date),
-        },
-        });
+        const payment = await prisma.$transaction(async (tx) => {
+            const newPayment = await prisma.debtPayment.create({
+                data: {
+                    debt_id: debtId,
+                    amount: payload.amount,
+                    payment_type: payload.payment_type,
+                    notes: payload.notes ?? null,
+                    date: new Date(payload.date),
+                },
+            });
 
-        const allPayments = await prisma.debtPayment.findMany({
-            where: { debt_id: debtId },
-        });
+            if (payload.payment_type == 'money') {
+                await tx.finance.create({
+                    data: {
+                        user_id: userId,
+                        type: 'income',
+                        amount: payload.amount,
+                        category: 'Debt Payment',
+                        description: `Pembayaran hutang dari ${debt.debtor_name}`,
+                        date: new Date(payload.date),
+                    },
+                });
+            }
 
-        const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+            const allPayments = await prisma.debtPayment.findMany({
+                where: { debt_id: debtId },
+            });
 
-        let totalDebt = 0;
-        if (debt.type == 'money' && debt.debt_money) {
-            totalDebt = Number(debt.debt_money.amount);
-        } else if (debt.type == 'item' && debt.debt_items) {
-            totalDebt = debt.debt_items.reduce((sum, item) => sum + Number(item.total_price ?? 0), 0);
-        }
+            const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
-        let newStatus: 'unpaid' | 'partial' | 'paid' = 'unpaid';
-        if (totalPaid >= totalDebt && totalDebt > 0) {
-            newStatus = 'paid';
-        } else if (totalPaid > 0) {
-            newStatus = 'partial';
-        }
+            let totalDebt = 0;
+            if (debt.type == 'money' && debt.debt_money) {
+                totalDebt = Number(debt.debt_money.amount);
+            } else if (debt.type == 'item' && debt.debt_items) {
+                totalDebt = debt.debt_items.reduce((sum, item) => sum + Number(item.total_price ?? 0), 0);
+            }
 
-        await prisma.debt.update({
-            where: { id: debtId },
-            data: { status: newStatus },
-        });
+            let newStatus: 'unpaid' | 'partial' | 'paid' = 'unpaid';
+            if (totalPaid >= totalDebt && totalDebt > 0) {
+                newStatus = 'paid';
+            } else if (totalPaid > 0) {
+                newStatus = 'partial';
+            }
+
+            await prisma.debt.update({
+                where: { id: debtId },
+                data: { status: newStatus },
+            });
+
+            return newPayment;
+        })
 
         return payment;
     }
