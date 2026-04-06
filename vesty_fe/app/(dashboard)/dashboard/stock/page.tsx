@@ -8,7 +8,7 @@ import {
     Plus, X, ChevronsUpDown,
     ChevronUp, ChevronDown, Filter,
     ChevronRight, Check, History,
-    PackagePlus, PackageMinus
+    PackagePlus, PackageMinus, RefreshCw
 } from 'lucide-react';
 
 const defaultStockForm = {
@@ -42,14 +42,13 @@ export default function StockPage() {
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
     const [isMultiFilterOpen, setIsMultiFilterOpen] = useState(false);
     const [activeFilters, setActiveFilters] = useState<{ categories: string[] }>({ categories: [] });
-
+    const [activeSubmenu, setActiveSubmenu] = useState<'category' | null>(null);
     const [movementModal, setMovementModal] = useState<{
         type: 'in' | 'out';
         stockId: string;
         stockName: string;
     } | null>(null);
     const [movementForm, setMovementForm] = useState(defaultMovementForm);
-
     const [historyModal, setHistoryModal] = useState<{
         stockId: string;
         stockName: string;
@@ -77,6 +76,7 @@ export default function StockPage() {
         const handleClickOutside = (event: MouseEvent) => {
             if (multiFilterRef.current && !multiFilterRef.current.contains(event.target as Node)) {
                 setIsMultiFilterOpen(false);
+                setActiveSubmenu(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -212,8 +212,14 @@ export default function StockPage() {
     };
 
     const CustomCheckbox = ({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) => (
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-800/50 cursor-pointer transition-colors group" onClick={onChange}>
-            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${checked ? 'bg-blue-600 border-blue-600' : 'border-gray-600 group-hover:border-gray-400'}`}>
+        <div 
+            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group" 
+            onClick={(e) => {
+                e.stopPropagation();
+                onChange();
+            }}
+        >
+            <div className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-all ${checked ? 'bg-blue-600 border-blue-600' : 'border-gray-600 group-hover:border-gray-400'}`}>
                 {checked && <Check size={12} className="text-white" strokeWidth={4} />}
             </div>
             <span className={`text-sm transition-colors ${checked ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>{label}</span>
@@ -223,68 +229,98 @@ export default function StockPage() {
     const totalActiveFilters = activeFilters.categories.length;
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
             {/* Header Controls */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto order-2 md:order-1">
-                    {/* Search */}
-                    <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search"
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Filter */}
-                    <div className="relative w-full md:w-auto" ref={multiFilterRef}>
-                        <button
-                            onClick={() => setIsMultiFilterOpen(!isMultiFilterOpen)}
-                            className={`flex items-center gap-2 px-4 py-2.5 border text-sm font-medium rounded-xl transition w-full ${
-                                isMultiFilterOpen || totalActiveFilters > 0
-                                    ? 'bg-gray-800 border-blue-500 text-white'
-                                    : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                            }`}
-                        >
-                            <Filter size={16} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
-                            <span>Filters</span>
-                            {totalActiveFilters > 0 && (
-                                <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{totalActiveFilters}</span>
-                            )}
-                        </button>
-
-                        {isMultiFilterOpen && (
-                            <div className="absolute left-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 py-2 ring-1 ring-black/50">
-                                <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
-                                    <span className="font-medium">Filter by Category</span>
-                                    <ChevronRight size={14} className="opacity-50" />
-                                    <div className="absolute left-[calc(100%+4px)] top-0 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2 max-h-72 overflow-y-auto custom-scrollbar">
-                                        {allCategories.length > 0 ? allCategories.map(c => (
-                                            <CustomCheckbox key={c} checked={activeFilters.categories.includes(c)} onChange={() => toggleFilter(c)} label={c} />
-                                        )) : (
-                                            <p className="px-4 py-2 text-xs text-gray-500 italic">No categories yet</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {totalActiveFilters > 0 && (
-                                    <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
-                                        <button onClick={() => setActiveFilters({ categories: [] })} className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-red-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-all">
-                                            Clear Filters
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+            <div className="flex items-center mb-6 gap-2">
+                {/* Search */}
+                <div className="relative grow min-w-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Search"
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
 
+                {/* Multiple Filter */}
+                <div className="relative shrink-0" ref={multiFilterRef}>
+                    <button
+                        onClick={() => {
+                            setIsMultiFilterOpen(!isMultiFilterOpen);
+                            setActiveSubmenu(null);
+                        }}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
+                            isMultiFilterOpen || totalActiveFilters > 0
+                            ? 'bg-gray-800 border-blue-500 text-white' 
+                            : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                        }`}
+                    >
+                        <Filter size={18} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
+                        <span className="hidden md:inline">Filters</span>
+                        {totalActiveFilters > 0 && (
+                            <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{totalActiveFilters}</span>
+                        )}
+                    </button>
+
+                    {isMultiFilterOpen && (
+                        <div className="absolute right-0 md:left-0 md:right-auto mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 py-2 ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
+                            
+                            <div className="relative group">
+                                <div 
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'category' ? null : 'category');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Filter by Category</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'category' ? 'rotate-90' : ''}`} />
+                                </div>
+                                
+                                <div className={`
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-52 py-1 max-h-72 overflow-y-auto custom-scrollbar
+                                    ${activeSubmenu == 'category' ? 'block' : 'hidden md:group-hover:block'}
+                                `}>
+                                    {allCategories.length > 0 ? allCategories.map(c => (
+                                        <CustomCheckbox key={c} checked={activeFilters.categories.includes(c)} onChange={() => toggleFilter(c)} label={c} />
+                                    )) : (
+                                        <p className="px-4 py-2 text-xs text-gray-500 italic">No categories yet</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {totalActiveFilters > 0 && (
+                                <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveFilters({ categories: [] });
+                                        }} 
+                                        className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-red-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-all"
+                                    >
+                                        Clear Filters
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Button Refresh */}
+                <button onClick={fetchStocks} disabled={isLoading}
+                    className="shrink-0 flex items-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50"
+                >
+                    <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+                    <span className="hidden md:inline">Refresh</span>
+                </button>
+
+                {/* Add Record */}
                 <div className="w-full md:w-auto order-1 md:order-2 flex justify-end">
-                    <button onClick={() => setShowForm(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20">
-                        <Plus size={18} /> Add Item
+                    <button onClick={() => setShowForm(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20">
+                        <Plus size={18} /> <span className="hidden md:inline">Add Item</span>
                     </button>
                 </div>
             </div>

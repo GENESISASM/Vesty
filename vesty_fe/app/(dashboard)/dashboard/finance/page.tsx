@@ -7,12 +7,12 @@ import {
     Search, Pencil, Trash2,
     Plus, CalendarDays, X,
     ChevronsUpDown, ChevronUp, ChevronDown,
-    Filter, ChevronRight, Check
+    Filter, ChevronRight, Check, RefreshCw
 } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
-const CATEGORIES = ['Salary', 'Commission', 'Amil Zakat', 'Food', 'Transport', 'Shopping', 'Health', 'Maintenance', 'Entertainment', 'Bills', 'Liability','Other'];
+const CATEGORIES = ['Salary', 'Commission', 'Amil Zakat', 'Food', 'Transport', 'Shopping', 'Health', 'Maintenance', 'Entertainment', 'Bills', 'Liability', 'Other'];
 const TYPES = ['income', 'expense'];
 
 const defaultForm = {
@@ -358,6 +358,14 @@ export default function FinancePage() {
                         </div>
                     )}
                 </div>
+
+                {/* Button Refresh */}
+                <button onClick={fetchFinances} disabled={isLoading}
+                    className="shrink-0 flex items-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50"
+                >
+                    <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+                    <span className="hidden md:inline">Refresh</span>
+                </button>
 
                 {/* Add Transaction */}
                 <button 

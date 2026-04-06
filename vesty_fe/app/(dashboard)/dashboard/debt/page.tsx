@@ -6,10 +6,12 @@ import { Debt, DebtSummary } from '@/lib/types';
 import {
     Search, Pencil, Trash2, Plus, X,
     ChevronsUpDown, ChevronUp, ChevronDown,
-    Filter, ChevronRight, Check, Wallet,
-    Package, CreditCard, Clock, CheckCircle2,
-    AlertCircle, CircleDashed, Plus as PlusIcon
+    Filter, ChevronRight, Check, Wallet, CalendarDays,
+    Package, CreditCard, RefreshCw, CheckCircle2,
+    AlertCircle, CircleDashed, Plus as PlusIcon,
 } from 'lucide-react';
+import { DayPicker, DateRange } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
 
 const STATUS_OPTIONS = ['unpaid', 'partial', 'paid'];
 const TYPE_OPTIONS = ['money', 'item'];
@@ -49,22 +51,24 @@ export default function DebtPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
     const [isMultiFilterOpen, setIsMultiFilterOpen] = useState(false);
+    const [activeSubmenu, setActiveSubmenu] = useState<'status' | 'type' | null>(null);
     const [activeFilters, setActiveFilters] = useState<{ statuses: string[]; types: string[] }>({
         statuses: [],
         types: [],
     });
-
     const [showForm, setShowForm] = useState(false);
-    const [editId, setEditId] = useState<string | null>(null);
     const [form, setForm] = useState(defaultDebtForm);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
-
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [detailDebt, setDetailDebt] = useState<Debt | null>(null);
     const [paymentModal, setPaymentModal] = useState<Debt | null>(null);
     const [paymentForm, setPaymentForm] = useState(defaultPaymentForm);
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const [tempRange, setTempRange] = useState<DateRange | undefined>(undefined);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
 
     const fetchData = useCallback(async () => {
@@ -87,13 +91,18 @@ export default function DebtPage() {
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsFilterOpen(false);
+                setTempRange(dateRange);
+            }
             if (multiFilterRef.current && !multiFilterRef.current.contains(e.target as Node)) {
                 setIsMultiFilterOpen(false);
+                setActiveSubmenu(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [dateRange]);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -101,10 +110,9 @@ export default function DebtPage() {
         }).format(amount);
     };
 
-    const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'short', year: 'numeric',
-        });
+    const formatDate = (date?: Date) => {
+        if (!date) return '';
+        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     };
 
     const getDebtAmount = (debt: Debt) => {
@@ -155,7 +163,15 @@ export default function DebtPage() {
                 .some(f => f?.toLowerCase().includes(query));
             const matchesStatus = activeFilters.statuses.length == 0 || activeFilters.statuses.includes(d.status);
             const matchesType = activeFilters.types.length == 0 || activeFilters.types.includes(d.type);
-            return matchesSearch && matchesStatus && matchesType;
+
+            if (!dateRange?.from || !dateRange?.to) {
+                return matchesSearch && matchesStatus && matchesType;
+            }
+
+            const fDate = new Date(d.date);
+            const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
+            const end = new Date(dateRange.to); end.setHours(23, 59, 59, 999);
+            return matchesSearch && matchesStatus && matchesType && (fDate >= start && fDate <= end);
         });
 
         if (sortConfig.key && sortConfig.direction) {
@@ -186,7 +202,7 @@ export default function DebtPage() {
             });
         }
         return result;
-    }, [debts, searchQuery, sortConfig, activeFilters]);
+    }, [debts, searchQuery, sortConfig, activeFilters, dateRange]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -287,8 +303,14 @@ export default function DebtPage() {
     const totalActiveFilters = activeFilters.statuses.length + activeFilters.types.length;
 
     const CustomCheckbox = ({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) => (
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-800/50 cursor-pointer transition-colors group" onClick={onChange}>
-            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${checked ? 'bg-blue-600 border-blue-600' : 'border-gray-600 group-hover:border-gray-400'}`}>
+        <div 
+            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group" 
+            onClick={(e) => {
+                e.stopPropagation();
+                onChange();
+            }}
+        >
+            <div className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-all ${checked ? 'bg-blue-600 border-blue-600' : 'border-gray-600 group-hover:border-gray-400'}`}>
                 {checked && <Check size={12} className="text-white" strokeWidth={4} />}
             </div>
             <span className={`text-sm transition-colors capitalize ${checked ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>{label}</span>
@@ -296,7 +318,7 @@ export default function DebtPage() {
     );
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto px-4 md:px-0">
             {/* Summary Cards */}
             {!isLoading && summary && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -323,74 +345,152 @@ export default function DebtPage() {
             )}
 
             {/* Header Controls */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto order-2 md:order-1">
-                    {/* Search */}
-                    <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search debtor..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Multi Filter */}
-                    <div className="relative w-full md:w-auto" ref={multiFilterRef}>
-                        <button
-                            onClick={() => setIsMultiFilterOpen(!isMultiFilterOpen)}
-                            className={`flex items-center gap-2 px-4 py-2.5 border text-sm font-medium rounded-xl transition w-full ${
-                                isMultiFilterOpen || totalActiveFilters > 0
-                                    ? 'bg-gray-800 border-blue-500 text-white'
-                                    : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                            }`}
-                        >
-                            <Filter size={16} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
-                            <span>Filters</span>
-                            {totalActiveFilters > 0 && (
-                                <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{totalActiveFilters}</span>
-                            )}
-                        </button>
-
-                        {isMultiFilterOpen && (
-                            <div className="absolute left-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 py-2 ring-1 ring-black/50">
-                                <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
-                                    <span className="font-medium">Filter by Status</span>
-                                    <ChevronRight size={14} className="opacity-50" />
-                                    <div className="absolute left-[calc(100%+4px)] top-0 w-44 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2">
-                                        {STATUS_OPTIONS.map(s => (
-                                            <CustomCheckbox key={s} checked={activeFilters.statuses.includes(s)} onChange={() => toggleFilter('statuses', s)} label={s} />
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="relative group px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all">
-                                    <span className="font-medium">Filter by Type</span>
-                                    <ChevronRight size={14} className="opacity-50" />
-                                    <div className="absolute left-[calc(100%+4px)] top-0 w-44 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden group-hover:block py-2">
-                                        {TYPE_OPTIONS.map(t => (
-                                            <CustomCheckbox key={t} checked={activeFilters.types.includes(t)} onChange={() => toggleFilter('types', t)} label={t} />
-                                        ))}
-                                    </div>
-                                </div>
-                                {totalActiveFilters > 0 && (
-                                    <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
-                                        <button onClick={() => setActiveFilters({ statuses: [], types: [] })} className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-red-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-all">
-                                            Clear Filters
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+            <div className="flex items-center mb-6 gap-2">
+                {/* Search */}
+                <div className="relative grow min-w-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                    <input 
+                        type="text"
+                        placeholder="Search"
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
 
-                <div className="w-full md:w-auto order-1 md:order-2 flex justify-end">
-                    <button onClick={() => setShowForm(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20">
-                        <Plus size={18} /> Add Debt
+                {/* Date Filter */}
+                <div className="relative shrink-0" ref={dropdownRef}>
+                    <button
+                        onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
+                            isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                        }`}
+                    >
+                        <CalendarDays size={18} className="text-gray-400" />
+                        <span className="hidden md:inline">{dateRange?.from && dateRange?.to ? `${formatDate(dateRange.from)} – ${formatDate(dateRange.to)}` : 'Date'}</span>
                     </button>
+
+                    {isFilterOpen && (
+                        <div className="absolute left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden w-[90vw] sm:w-max">
+                            <div className="p-2.5 rdp-dark flex justify-center">
+                                <DayPicker
+                                    mode="range"
+                                    selected={tempRange}
+                                    onSelect={setTempRange}
+                                    numberOfMonths={window.innerWidth < 640 ? 1 : 2}
+                                    showOutsideDays={false}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
+                                <div className="flex gap-2 ml-auto">
+                                    <button onClick={() => { setTempRange(undefined); setDateRange(undefined); setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 rounded-lg">Reset</button>
+                                    <button onClick={() => { if (tempRange?.from && tempRange?.to) { setDateRange(tempRange); } setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
+                {/* Multiple Filter */}
+                <div className="relative shrink-0" ref={multiFilterRef}>
+                    <button
+                        onClick={() => {
+                            setIsMultiFilterOpen(!isMultiFilterOpen);
+                            setActiveSubmenu(null);
+                        }}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
+                            isMultiFilterOpen || totalActiveFilters > 0
+                            ? 'bg-gray-800 border-blue-500 text-white' 
+                            : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                        }`}
+                    >
+                        <Filter size={18} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
+                        <span className="hidden md:inline">Filters</span>
+                        {totalActiveFilters > 0 && (
+                            <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{totalActiveFilters}</span>
+                        )}
+                    </button>
+
+                    {isMultiFilterOpen && (
+                        <div className="absolute right-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
+                            
+                            {/* Status Filter */}
+                            <div className="relative group">
+                                <div 
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'status' ? null : 'status');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Filter by Status</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'status' ? 'rotate-90' : ''}`} />
+                                </div>
+                                <div className={`
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
+                                    ${activeSubmenu == 'status' ? 'block' : 'hidden md:group-hover:block'}
+                                `}>
+                                    {STATUS_OPTIONS.map(s => (
+                                        <CustomCheckbox key={s} checked={activeFilters.statuses.includes(s)} onChange={() => toggleFilter('statuses', s)} label={s} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Type Filter */}
+                            <div className="relative group border-t border-gray-800/50 md:border-t-0">
+                                <div 
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'type' ? null : 'type');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Filter by Type</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'type' ? 'rotate-90' : ''}`} />
+                                </div>
+                                <div className={`
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
+                                    ${activeSubmenu == 'type' ? 'block' : 'hidden md:group-hover:block'}
+                                `}>
+                                    {TYPE_OPTIONS.map(t => (
+                                        <CustomCheckbox key={t} checked={activeFilters.types.includes(t)} onChange={() => toggleFilter('types', t)} label={t} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {totalActiveFilters > 0 && (
+                                <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveFilters({ statuses: [], types: [] });
+                                        }} 
+                                        className="w-full text-center py-2 text-xs font-semibold text-red-400 hover:text-red-300"
+                                    >
+                                        Clear All
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Button Refresh */}
+                <button onClick={fetchData} disabled={isLoading}
+                    className="shrink-0 flex items-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50"
+                >
+                    <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+                    <span className="hidden md:inline">Refresh</span>
+                </button>
+
+                {/* Add Debt Record */}
+                <button onClick={() => setShowForm(true)} 
+                    className="shrink-0 flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20"
+                >
+                    <Plus size={18} /> <span className="hidden md:inline">Add Debt</span>
+                </button>
             </div>
 
             {/* Table */}
@@ -398,12 +498,12 @@ export default function DebtPage() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-800/50 text-gray-300 text-[13px] uppercase tracking-wider border-b border-gray-800 select-none">
+                            <tr className="bg-gray-800/50 text-gray-300 text-[13px] uppercase tracking-wider border-b border-gray-800 select-none text-center">
                                 <th onClick={() => requestSort('type')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
                                     <div className="flex items-center justify-center">Type {getSortIcon('type')}</div>
                                 </th>
                                 <th onClick={() => requestSort('debtor_name')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
-                                    <div className="flex items-center justify-center">Debtor {getSortIcon('debtor_name')}</div>
+                                    <div className="flex items-center justify-center">Name {getSortIcon('debtor_name')}</div>
                                 </th>
                                 <th onClick={() => requestSort('status')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
                                     <div className="flex items-center justify-center">Status {getSortIcon('status')}</div>
@@ -415,6 +515,7 @@ export default function DebtPage() {
                                     <div className="flex items-center justify-center">Amount {getSortIcon('amount')}</div>
                                 </th>
                                 <th className="px-6 py-4 font-bold text-center">Paid</th>
+                                <th className="px-6 py-4 font-bold text-center">Notes</th>
                                 <th className="px-6 py-4 font-bold text-center">Actions</th>
                             </tr>
                         </thead>
@@ -422,7 +523,7 @@ export default function DebtPage() {
                             {isLoading ? (
                                 [1,2,3].map(i => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={7} className="px-6 py-4"><div className="h-12 bg-gray-800/50 rounded-lg" /></td>
+                                        <td colSpan={8} className="px-6 py-4"><div className="h-12 bg-gray-800/50 rounded-lg" /></td>
                                     </tr>
                                 ))
                             ) : processedDebts.length > 0 ? (
@@ -443,7 +544,6 @@ export default function DebtPage() {
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <p className="text-white font-medium text-sm">{debt.debtor_name}</p>
-                                                    {debt.notes && <p className="text-gray-500 text-xs mt-0.5 truncate max-w-32">{debt.notes}</p>}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -452,7 +552,7 @@ export default function DebtPage() {
                                                     {status.label}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-400 text-sm">{formatDate(debt.date)}</td>
+                                            <td className="px-6 py-4 text-white text-sm">{formatDate(new Date(debt.date))}</td>
                                             <td className="px-6 py-4 text-white font-semibold text-sm">
                                                 {amount > 0 ? formatCurrency(amount) : '-'}
                                             </td>
@@ -462,6 +562,11 @@ export default function DebtPage() {
                                                 ) : (
                                                     <span className="text-gray-600">-</span>
                                                 )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div>
+                                                    <p className="text-white font-medium text-sm">{debt.notes}</p>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-1">
@@ -483,7 +588,7 @@ export default function DebtPage() {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-20 text-center text-gray-500 italic text-sm">No debts found.</td>
+                                    <td colSpan={8} className="px-6 py-20 text-center text-gray-500 italic text-sm">No debts found.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -667,12 +772,12 @@ export default function DebtPage() {
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-400">Date</span>
-                                <span className="text-white">{formatDate(detailDebt.date)}</span>
+                                <span className="text-white">{formatDate(new Date(detailDebt.date))}</span>
                             </div>
                             {detailDebt.due_date && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-400">Due Date</span>
-                                    <span className="text-yellow-400">{formatDate(detailDebt.due_date)}</span>
+                                    <span className="text-yellow-400">{formatDate(new Date(detailDebt.due_date))}</span>
                                 </div>
                             )}
                             {detailDebt.notes && (
@@ -725,7 +830,7 @@ export default function DebtPage() {
                                             <div>
                                                 <p className="text-white text-sm font-medium capitalize">{p.payment_type} payment</p>
                                                 {p.notes && <p className="text-gray-500 text-xs">{p.notes}</p>}
-                                                <p className="text-gray-600 text-xs">{formatDate(p.date)}</p>
+                                                <p className="text-gray-600 text-xs">{formatDate(new Date(p.date))}</p>
                                             </div>
                                             <span className="text-green-400 font-semibold text-sm">{formatCurrency(Number(p.amount))}</span>
                                         </div>
