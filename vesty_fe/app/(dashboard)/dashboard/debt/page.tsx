@@ -51,10 +51,11 @@ export default function DebtPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
     const [isMultiFilterOpen, setIsMultiFilterOpen] = useState(false);
-    const [activeSubmenu, setActiveSubmenu] = useState<'status' | 'type' | null>(null);
-    const [activeFilters, setActiveFilters] = useState<{ statuses: string[]; types: string[] }>({
+    const [activeSubmenu, setActiveSubmenu] = useState<'status' | 'type' | 'name' | null>(null);
+    const [activeFilters, setActiveFilters] = useState<{ statuses: string[]; types: string[]; names: string[] }>({
         statuses: [],
         types: [],
+        names: [],
     });
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(defaultDebtForm);
@@ -104,6 +105,11 @@ export default function DebtPage() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [dateRange]);
 
+    const allDebtorNames = useMemo(() => {
+        const names = debts.map(d => d.debtor_name).filter(Boolean);
+        return [...new Set(names)].sort();
+    }, [debts]);
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency', currency: 'IDR', minimumFractionDigits: 0,
@@ -146,7 +152,7 @@ export default function DebtPage() {
         return <Icon size={14} className="ml-1 text-blue-500" />;
     };
 
-    const toggleFilter = (group: 'statuses' | 'types', value: string) => {
+    const toggleFilter = (group: 'statuses' | 'types' | 'names', value: string) => {
         setActiveFilters(prev => {
             const current = prev[group];
             const next = current.includes(value)
@@ -163,15 +169,17 @@ export default function DebtPage() {
                 .some(f => f?.toLowerCase().includes(query));
             const matchesStatus = activeFilters.statuses.length == 0 || activeFilters.statuses.includes(d.status);
             const matchesType = activeFilters.types.length == 0 || activeFilters.types.includes(d.type);
+            const matchesName = activeFilters.names.length == 0 || activeFilters.names.includes(d.debtor_name);
 
             if (!dateRange?.from || !dateRange?.to) {
-                return matchesSearch && matchesStatus && matchesType;
+                return matchesSearch && matchesStatus && matchesType && matchesName;
             }
 
             const fDate = new Date(d.date);
             const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
             const end = new Date(dateRange.to); end.setHours(23, 59, 59, 999);
-            return matchesSearch && matchesStatus && matchesType && (fDate >= start && fDate <= end);
+
+            return matchesSearch && matchesStatus && matchesType && matchesName && (fDate >= start && fDate <= end);
         });
 
         if (sortConfig.key && sortConfig.direction) {
@@ -300,7 +308,7 @@ export default function DebtPage() {
         }));
     };
 
-    const totalActiveFilters = activeFilters.statuses.length + activeFilters.types.length;
+    const totalActiveFilters = activeFilters.statuses.length + activeFilters.types.length + activeFilters.names.length;
 
     const CustomCheckbox = ({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) => (
         <div 
@@ -413,27 +421,28 @@ export default function DebtPage() {
 
                     {isMultiFilterOpen && (
                         <div className="absolute right-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
-                            
-                            {/* Status Filter */}
-                            <div className="relative group">
+                            {/* Name Filter */}
+                            <div className="relative group border-t border-gray-800/50 md:border-t-0">
                                 <div 
                                     className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
                                     onClick={() => {
                                         if (window.innerWidth < 768) {
-                                            setActiveSubmenu(activeSubmenu == 'status' ? null : 'status');
+                                            setActiveSubmenu(activeSubmenu == 'name' ? null : 'name');
                                         }
                                     }}
                                 >
-                                    <span className="font-medium">Filter by Status</span>
-                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'status' ? 'rotate-90' : ''}`} />
+                                    <span className="font-medium">Filter by Name</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'name' ? 'rotate-90' : ''}`} />
                                 </div>
                                 <div className={`
-                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
-                                    ${activeSubmenu == 'status' ? 'block' : 'hidden md:group-hover:block'}
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-52 py-1 max-h-60 overflow-y-auto custom-scrollbar
+                                    ${activeSubmenu == 'name' ? 'block' : 'hidden md:group-hover:block'}
                                 `}>
-                                    {STATUS_OPTIONS.map(s => (
-                                        <CustomCheckbox key={s} checked={activeFilters.statuses.includes(s)} onChange={() => toggleFilter('statuses', s)} label={s} />
-                                    ))}
+                                    {allDebtorNames.length > 0 ? allDebtorNames.map(n => (
+                                        <CustomCheckbox key={n} checked={activeFilters.names.includes(n)} onChange={() => toggleFilter('names', n)} label={n} />
+                                    )) : (
+                                        <p className="px-4 py-2 text-xs text-gray-500 italic">No debtors yet</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -460,12 +469,35 @@ export default function DebtPage() {
                                 </div>
                             </div>
 
+                            {/* Status Filter */}
+                            <div className="relative group">
+                                <div 
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'status' ? null : 'status');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Filter by Status</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'status' ? 'rotate-90' : ''}`} />
+                                </div>
+                                <div className={`
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
+                                    ${activeSubmenu == 'status' ? 'block' : 'hidden md:group-hover:block'}
+                                `}>
+                                    {STATUS_OPTIONS.map(s => (
+                                        <CustomCheckbox key={s} checked={activeFilters.statuses.includes(s)} onChange={() => toggleFilter('statuses', s)} label={s} />
+                                    ))}
+                                </div>
+                            </div>
+
                             {totalActiveFilters > 0 && (
                                 <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setActiveFilters({ statuses: [], types: [] });
+                                            setActiveFilters({ statuses: [], types: [], names: [] });
                                         }} 
                                         className="w-full text-center py-2 text-xs font-semibold text-red-400 hover:text-red-300"
                                     >

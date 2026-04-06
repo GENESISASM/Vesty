@@ -265,9 +265,8 @@ export default function StockPage() {
                     </button>
 
                     {isMultiFilterOpen && (
-                        <div className="absolute right-0 md:left-0 md:right-auto mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 py-2 ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
-                            
-                            <div className="relative group">
+                        <div className="absolute right-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
+                            <div className="relative group border-t border-gray-800/50 md:border-t-0">
                                 <div 
                                     className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
                                     onClick={() => {
@@ -281,7 +280,7 @@ export default function StockPage() {
                                 </div>
                                 
                                 <div className={`
-                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-52 py-1 max-h-72 overflow-y-auto custom-scrollbar
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-52 py-1 max-h-60 overflow-y-auto custom-scrollbar
                                     ${activeSubmenu == 'category' ? 'block' : 'hidden md:group-hover:block'}
                                 `}>
                                     {allCategories.length > 0 ? allCategories.map(c => (
