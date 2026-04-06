@@ -166,6 +166,9 @@ export default function DebtPage() {
                 if (sortConfig.key == 'amount') {
                     aVal = getDebtAmount(a);
                     bVal = getDebtAmount(b);
+                } else if (sortConfig.key == 'type') {
+                    aVal = a.type;
+                    bVal = b.type;
                 } else if (sortConfig.key == 'debtor_name') {
                     aVal = a.debtor_name;
                     bVal = b.debtor_name;
@@ -271,7 +274,6 @@ export default function DebtPage() {
             items: prev.items.map((item, i) => {
                 if (i != index) return item;
                 const updated = { ...item, [field]: value };
-                // Auto hitung total_price
                 if (field == 'quantity' || field == 'price_per_unit') {
                     const qty = Number(field == 'quantity' ? value : item.quantity);
                     const price = Number(field == 'price_per_unit' ? value : item.price_per_unit);
@@ -397,20 +399,22 @@ export default function DebtPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-800/50 text-gray-300 text-[13px] uppercase tracking-wider border-b border-gray-800 select-none">
+                                <th onClick={() => requestSort('type')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
+                                    <div className="flex items-center justify-center">Type {getSortIcon('type')}</div>
+                                </th>
                                 <th onClick={() => requestSort('debtor_name')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
                                     <div className="flex items-center justify-center">Debtor {getSortIcon('debtor_name')}</div>
                                 </th>
-                                <th className="px-6 py-4 font-bold text-center">Type</th>
                                 <th onClick={() => requestSort('status')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
                                     <div className="flex items-center justify-center">Status {getSortIcon('status')}</div>
+                                </th>
+                                <th onClick={() => requestSort('date')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
+                                    <div className="flex items-center justify-center">Date {getSortIcon('date')}</div>
                                 </th>
                                 <th onClick={() => requestSort('amount')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
                                     <div className="flex items-center justify-center">Amount {getSortIcon('amount')}</div>
                                 </th>
                                 <th className="px-6 py-4 font-bold text-center">Paid</th>
-                                <th onClick={() => requestSort('date')} className="px-6 py-4 font-bold cursor-pointer hover:text-white transition">
-                                    <div className="flex items-center justify-center">Date {getSortIcon('date')}</div>
-                                </th>
                                 <th className="px-6 py-4 font-bold text-center">Actions</th>
                             </tr>
                         </thead>
@@ -431,16 +435,16 @@ export default function DebtPage() {
                                     return (
                                         <tr key={debt.id} className="hover:bg-gray-800/30 transition-colors">
                                             <td className="px-6 py-4">
-                                                <div>
-                                                    <p className="text-white font-medium text-sm">{debt.debtor_name}</p>
-                                                    {debt.notes && <p className="text-gray-500 text-xs mt-0.5 truncate max-w-32">{debt.notes}</p>}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${debt.type == 'money' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'}`}>
                                                     {debt.type == 'money' ? <Wallet size={12} /> : <Package size={12} />}
                                                     {debt.type}
                                                 </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div>
+                                                    <p className="text-white font-medium text-sm">{debt.debtor_name}</p>
+                                                    {debt.notes && <p className="text-gray-500 text-xs mt-0.5 truncate max-w-32">{debt.notes}</p>}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${status.bg} ${status.color}`}>
@@ -448,6 +452,7 @@ export default function DebtPage() {
                                                     {status.label}
                                                 </span>
                                             </td>
+                                            <td className="px-6 py-4 text-gray-400 text-sm">{formatDate(debt.date)}</td>
                                             <td className="px-6 py-4 text-white font-semibold text-sm">
                                                 {amount > 0 ? formatCurrency(amount) : '-'}
                                             </td>
@@ -458,7 +463,6 @@ export default function DebtPage() {
                                                     <span className="text-gray-600">-</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-gray-400 text-sm">{formatDate(debt.date)}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-1">
                                                     <button onClick={() => setDetailDebt(debt)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition" title="Detail">

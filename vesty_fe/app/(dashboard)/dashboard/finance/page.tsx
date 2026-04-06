@@ -12,7 +12,7 @@ import {
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
-const CATEGORIES = ['Salary', 'Commission', 'Food', 'Transport', 'Shopping', 'Health', 'Maintenance', 'Entertainment', 'Bills', 'Liability','Other'];
+const CATEGORIES = ['Salary', 'Commission', 'Amil Zakat', 'Food', 'Transport', 'Shopping', 'Health', 'Maintenance', 'Entertainment', 'Bills', 'Liability','Other'];
 const TYPES = ['income', 'expense'];
 
 const defaultForm = {
