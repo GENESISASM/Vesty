@@ -23,6 +23,11 @@ const defaultForm = {
     date: new Date().toISOString().split('T')[0],
 };
 
+const toLocalISO = (date: Date) => {
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().split('T')[0];
+};
+
 type SortConfig = {
     key: keyof Finance | 'amount_num' | null;
     direction: 'asc' | 'desc' | null;
@@ -461,7 +466,7 @@ export default function FinancePage() {
                                 </button>
                                 {isFormDatePickerOpen && (
                                     <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                        <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: date.toISOString().split('T')[0] }); setIsFormDatePickerOpen(false); }}} />
+                                        <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: toLocalISO(date) }); setIsFormDatePickerOpen(false); }}} />
                                     </div>
                                 )}
                             </div>

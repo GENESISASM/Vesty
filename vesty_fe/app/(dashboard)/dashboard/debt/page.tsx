@@ -24,7 +24,7 @@ const statusConfig = {
 
 const defaultDebtForm = {
     debtor_name: '',
-    type: 'money' as 'money' | 'item',
+    type: 'item' as 'item' | 'money',
     notes: '',
     date: new Date().toISOString().split('T')[0],
     due_date: '',
@@ -37,6 +37,11 @@ const defaultPaymentForm = {
     payment_type: 'money' as 'money' | 'item',
     notes: '',
     date: new Date().toISOString().split('T')[0],
+};
+
+const toLocalISO = (date: Date) => {
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().split('T')[0];
 };
 
 type SortConfig = {
@@ -776,7 +781,7 @@ export default function DebtPage() {
                                     </button>
                                     {isDateOpen && (
                                         <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                            <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: date.toISOString().split('T')[0] }); setIsDateOpen(false); }}} />
+                                            <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: toLocalISO(date) }); setIsDateOpen(false); }}} />
                                         </div>
                                     )}
                                 </div>
@@ -788,7 +793,7 @@ export default function DebtPage() {
                                     </button>
                                     {isDueDateOpen && (
                                         <div className="absolute right-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                            <DayPicker mode="single" selected={form.due_date ? new Date(form.due_date) : undefined} onSelect={(date) => { setForm({ ...form, due_date: date ? date.toISOString().split('T')[0] : '' }); setIsDueDateOpen(false); }} />
+                                            <DayPicker mode="single" selected={form.due_date ? new Date(form.due_date) : undefined} onSelect={(date) => { setForm({ ...form, due_date: date ? toLocalISO(date) : '' }); setIsDueDateOpen(false); }} />
                                         </div>
                                     )}
                                 </div>
@@ -930,7 +935,7 @@ export default function DebtPage() {
                                 </button>
                                 {isPaymentDateOpen && (
                                     <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                        <DayPicker mode="single" selected={new Date(paymentForm.date)} onSelect={(date) => { if (date) { setPaymentForm({ ...paymentForm, date: date.toISOString().split('T')[0] }); setIsPaymentDateOpen(false); }}} />
+                                        <DayPicker mode="single" selected={new Date(paymentForm.date)} onSelect={(date) => { if (date) { setPaymentForm({ ...paymentForm, date: toLocalISO(date) }); setIsPaymentDateOpen(false); }}} />
                                     </div>
                                 )}
                             </div>
