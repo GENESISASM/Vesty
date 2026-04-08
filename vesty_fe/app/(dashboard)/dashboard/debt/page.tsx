@@ -68,9 +68,15 @@ export default function DebtPage() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [tempRange, setTempRange] = useState<DateRange | undefined>(undefined);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isDateOpen, setIsDateOpen] = useState(false);
+    const [isDueDateOpen, setIsDueDateOpen] = useState(false);
+    const [isPaymentDateOpen, setIsPaymentDateOpen] = useState(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
+    const dateRef = useRef<HTMLDivElement>(null);
+    const dueDateRef = useRef<HTMLDivElement>(null);
+    const paymentDateRef = useRef<HTMLDivElement>(null);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -99,6 +105,15 @@ export default function DebtPage() {
             if (multiFilterRef.current && !multiFilterRef.current.contains(e.target as Node)) {
                 setIsMultiFilterOpen(false);
                 setActiveSubmenu(null);
+            }
+            if (dateRef.current && !dateRef.current.contains(e.target as Node)) {
+                setIsDateOpen(false);
+            }
+            if (dueDateRef.current && !dueDateRef.current.contains(e.target as Node)) {
+                setIsDueDateOpen(false);
+            }
+            if (paymentDateRef.current && !paymentDateRef.current.contains(e.target as Node)) {
+                setIsPaymentDateOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -753,24 +768,29 @@ export default function DebtPage() {
 
                             {/* Dates */}
                             <div className="grid grid-cols-2 gap-3">
-                                <div>
+                                <div className="relative" ref={dateRef}>
                                     <label className="text-gray-500 text-xs mb-1.5 block">Debt Date</label>
-                                    <input
-                                        type="date"
-                                        value={form.date}
-                                        onChange={(e) => setForm({ ...form, date: e.target.value })}
-                                        className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500"
-                                        required
-                                    />
+                                    <button type="button" onClick={() => setIsDateOpen(!isDateOpen)} className="w-full bg-gray-800 text-left px-4 py-3 rounded-xl text-white text-sm flex items-center justify-between border border-transparent focus:border-blue-500 transition">
+                                        <span className={form.date ? "text-white" : "text-gray-500"}>{form.date ? formatDate(new Date(form.date)) : "Select Date"}</span>
+                                        <CalendarDays size={18} className="text-gray-500" />
+                                    </button>
+                                    {isDateOpen && (
+                                        <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
+                                            <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: date.toISOString().split('T')[0] }); setIsDateOpen(false); }}} />
+                                        </div>
+                                    )}
                                 </div>
-                                <div>
+                                <div className="relative" ref={dueDateRef}>
                                     <label className="text-gray-500 text-xs mb-1.5 block">Due Date (optional)</label>
-                                    <input
-                                        type="date"
-                                        value={form.due_date}
-                                        onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-                                        className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500"
-                                    />
+                                    <button type="button" onClick={() => setIsDueDateOpen(!isDueDateOpen)} className="w-full bg-gray-800 text-left px-4 py-3 rounded-xl text-white text-sm flex items-center justify-between border border-transparent focus:ring-2 focus:ring-blue-500 transition">
+                                        <span className={form.due_date ? "text-white" : "text-gray-500"}>{form.due_date ? formatDate(new Date(form.due_date)) : "Select Due Date"}</span>
+                                        <CalendarDays size={18} className="text-gray-500" />
+                                    </button>
+                                    {isDueDateOpen && (
+                                        <div className="absolute right-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
+                                            <DayPicker mode="single" selected={form.due_date ? new Date(form.due_date) : undefined} onSelect={(date) => { setForm({ ...form, due_date: date ? date.toISOString().split('T')[0] : '' }); setIsDueDateOpen(false); }} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -903,7 +923,17 @@ export default function DebtPage() {
                             </div>
                             <input type="number" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="Amount (IDR)" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500" required />
                             <input type="text" value={paymentForm.notes} onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })} placeholder="Notes (optional)" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500" />
-                            <input type="date" value={paymentForm.date} onChange={(e) => setPaymentForm({ ...paymentForm, date: e.target.value })} className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" required />
+                            <div className="relative" ref={paymentDateRef}>
+                                <button type="button" onClick={() => setIsPaymentDateOpen(!isPaymentDateOpen)} className="w-full bg-gray-800 text-left px-4 py-3 rounded-xl text-white text-sm flex items-center justify-between border border-transparent focus:ring-2 focus:ring-blue-500 transition">
+                                    <span className={paymentForm.date ? "text-white" : "text-gray-500"}>{paymentForm.date ? formatDate(new Date(paymentForm.date)) : "Select Date"}</span>
+                                    <CalendarDays size={18} className="text-gray-500" />
+                                </button>
+                                {isPaymentDateOpen && (
+                                    <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
+                                        <DayPicker mode="single" selected={new Date(paymentForm.date)} onSelect={(date) => { if (date) { setPaymentForm({ ...paymentForm, date: date.toISOString().split('T')[0] }); setIsPaymentDateOpen(false); }}} />
+                                    </div>
+                                )}
+                            </div>
                             <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl shadow-lg transition disabled:opacity-50">
                                 {isSubmitting ? 'Processing...' : 'Record Payment'}
                             </button>
