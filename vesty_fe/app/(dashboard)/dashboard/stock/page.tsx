@@ -451,13 +451,13 @@ export default function StockPage() {
                                         <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                                     </div>
                                 ) : (
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 w-full items-center">
                                         <input 
                                             type="text" 
                                             value={form.category} 
                                             onChange={(e) => setForm({ ...form, category: e.target.value })} 
                                             placeholder="Enter new category" 
-                                            className="grow bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500"
+                                            className="grow min-w-0 bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500"
                                             autoFocus
                                             required
                                         />
@@ -467,7 +467,7 @@ export default function StockPage() {
                                                 setIsOtherCategory(false);
                                                 setForm({ ...form, category: '' });
                                             }}
-                                            className="px-3 bg-gray-800 text-gray-400 hover:text-white rounded-xl transition border border-gray-700"
+                                            className="shrink-0 w-12 h-12 flex items-center justify-center bg-gray-800 text-gray-400 hover:text-white rounded-xl transition border border-gray-700"
                                             title="Back to list"
                                         >
                                             <X size={18} />
