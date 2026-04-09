@@ -15,6 +15,7 @@ import 'react-day-picker/dist/style.css';
 
 const STATUS_OPTIONS = ['unpaid', 'partial', 'paid'];
 const TYPE_OPTIONS = ['money', 'item'];
+const STOCK_CATEGORIES = ['Apparel', 'Electronics', 'Groceries', 'Hardware & Tools', 'Health & Beauty', 'Homecare', 'Snacks & Beverages', 'Stationery', 'Tobacco'];
 
 const statusConfig = {
     unpaid: { label: 'Unpaid', color: 'text-red-400', bg: 'bg-red-400/10', icon: AlertCircle },
@@ -29,7 +30,15 @@ const defaultDebtForm = {
     date: new Date().toISOString().split('T')[0],
     due_date: '',
     amount: '',
-    items: [{ item_name: '', quantity: '', unit: '', price_per_unit: '', total_price: '' }],
+    items: [{ 
+        item_name: '',
+        quantity: '',
+        unit: '',
+        price_per_unit: '',
+        total_price: '',
+        category: '',
+        isOtherCategory: false
+    }],
 };
 
 const defaultPaymentForm = {
@@ -236,7 +245,6 @@ export default function DebtPage() {
         e.preventDefault();
         setIsSubmitting(true);
         setFormError(null);
-
         try {
             const payload: any = {
                 debtor_name: form.debtor_name,
@@ -253,6 +261,7 @@ export default function DebtPage() {
                     item_name: item.item_name,
                     quantity: Number(item.quantity),
                     unit: item.unit,
+                    category: item.category || undefined,
                     price_per_unit: item.price_per_unit ? Number(item.price_per_unit) : undefined,
                     total_price: item.total_price ? Number(item.total_price) : undefined,
                 }));
@@ -301,7 +310,15 @@ export default function DebtPage() {
     const addItem = () => {
         setForm(prev => ({
             ...prev,
-            items: [...prev.items, { item_name: '', quantity: '', unit: '', price_per_unit: '', total_price: '' }],
+            items: [...prev.items, { 
+                item_name: '', 
+                quantity: '', 
+                unit: '', 
+                price_per_unit: '', 
+                total_price: '', 
+                category: '', 
+                isOtherCategory: false
+            }],
         }));
     };
 
@@ -312,16 +329,20 @@ export default function DebtPage() {
         }));
     };
 
-    const updateItem = (index: number, field: string, value: string) => {
+    const updateItem = (index: number, field: string, value: string | boolean) => {
         setForm(prev => ({
             ...prev,
             items: prev.items.map((item, i) => {
-                if (i != index) return item;
+                if (i != index) {
+                    return item
+                }
                 const updated = { ...item, [field]: value };
                 if (field == 'quantity' || field == 'price_per_unit') {
                     const qty = Number(field == 'quantity' ? value : item.quantity);
                     const price = Number(field == 'price_per_unit' ? value : item.price_per_unit);
-                    if (qty && price) updated.total_price = String(qty * price);
+                    if (qty && price) {
+                        updated.total_price = String(qty * price)
+                    }
                 }
                 return updated;
             }),
@@ -720,6 +741,54 @@ export default function DebtPage() {
                                                 className="w-full bg-gray-800 border-none rounded-xl px-4 py-2.5 text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-blue-500"
                                                 required
                                             />
+                                            {!item.isOtherCategory ? (
+                                                <div className="relative">
+                                                    <select
+                                                        value={STOCK_CATEGORIES.includes(item.category) ? item.category : (item.category ? 'Other' : '')}
+                                                        onChange={(e) => {
+                                                            if (e.target.value == 'Other') {
+                                                                updateItem(index, 'isOtherCategory', true);
+                                                                updateItem(index, 'category', '');
+                                                            } else {
+                                                                updateItem(index, 'category', e.target.value);
+                                                            }
+                                                        }}
+                                                        className={
+                                                            `w-full bg-gray-800 border-none rounded-xl px-4 py-2.5 pr-10 cursor-pointer appearance-none text-sm focus:ring-2 focus:ring-blue-500 transition-colors 
+                                                            ${item.category == '' ? 'text-gray-500' : 'text-white'}`
+                                                        }
+                                                    >
+                                                        <option value="" disabled>Select Category</option>
+                                                        {STOCK_CATEGORIES.map(cat => (
+                                                            <option key={cat} value={cat} className="text-white bg-gray-900">{cat}</option>
+                                                        ))}
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                                </div>
+                                            ) : (
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={item.category}
+                                                        onChange={(e) => updateItem(index, 'category', e.target.value)}
+                                                        placeholder="Enter category"
+                                                        className="grow bg-gray-800 border-none rounded-xl px-4 py-2.5 text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-blue-500"
+                                                        autoFocus
+                                                        required
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            updateItem(index, 'isOtherCategory', false);
+                                                            updateItem(index, 'category', '');
+                                                        }}
+                                                        className="shrink-0 w-10 h-10 flex items-center justify-center bg-gray-800 text-gray-500 hover:text-white rounded-xl border border-gray-700"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
                                             <div className="grid grid-cols-2 gap-2">
                                                 <input
                                                     type="number"
