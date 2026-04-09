@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import axiosInstance from '@/lib/axios';
 import { Debt, DebtSummary } from '@/lib/types';
 import {
-    Search, Pencil, Trash2, Plus, X,
+    Search, Trash2, Plus, X,
     ChevronsUpDown, ChevronUp, ChevronDown,
     Filter, ChevronRight, Check, Wallet, CalendarDays,
     Package, CreditCard, RefreshCw, CheckCircle2,

@@ -12,13 +12,13 @@ import {
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
-const CATEGORIES = ['Salary', 'Commission', 'Amil Zakat', 'Food', 'Transport', 'Shopping', 'Health', 'Maintenance', 'Entertainment', 'Bills', 'Liability', 'Other'];
+const CATEGORIES = ['Amil Zakat', 'Bills', 'Commission', 'Entertainment', 'Food', 'Health & Beauty', 'Liability', 'Maintenance', 'Salary', 'Shopping', 'Transport'];
 const TYPES = ['income', 'expense'];
 
 const defaultForm = {
     type: 'income' as 'income' | 'expense',
     amount: '',
-    category: 'Salary',
+    category: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
 };
@@ -54,6 +54,7 @@ export default function FinancePage() {
         categories: []
     });
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
+    const [isOtherCategory, setIsOtherCategory] = useState(false);
 
     const formDateRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -166,6 +167,7 @@ export default function FinancePage() {
         setShowForm(false);
         setEditId(null);
         setError(null);
+        setIsOtherCategory(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -174,8 +176,12 @@ export default function FinancePage() {
         setError(null);
         try {
             const payload = { ...form, amount: Number(form.amount) };
-            if (editId) await axiosInstance.put(`/finance/update/${editId}`, payload);
-            else await axiosInstance.post('/finance/create', payload);
+            if (editId) {
+                await axiosInstance.put(`/finance/update/${editId}`, payload);
+            } else { 
+                await axiosInstance.post('/finance/create', payload);
+            }
+            setIsOtherCategory(false);
             handleCancel();
             fetchFinances();
         } catch (err: any) {
@@ -186,6 +192,7 @@ export default function FinancePage() {
     };
 
     const handleEdit = (finance: Finance) => {
+        const isPredefined = CATEGORIES.includes(finance.category ?? '');
         setForm({
             type: finance.type,
             amount: String(finance.amount),
@@ -194,6 +201,7 @@ export default function FinancePage() {
             date: new Date(finance.date).toISOString().split('T')[0],
         });
         setEditId(finance.id);
+        setIsOtherCategory(finance.category ? !isPredefined : false);
         setShowForm(true);
     };
 
@@ -454,10 +462,56 @@ export default function FinancePage() {
                                 <button type="button" onClick={() => setForm({ ...form, type: 'income' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'income' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Income</button>
                                 <button type="button" onClick={() => setForm({ ...form, type: 'expense' })} className={`py-2.5 rounded-xl text-sm font-bold transition ${form.type == 'expense' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-500'}`}>Expense</button>
                             </div>
+                            <div>
+                                {!isOtherCategory ? (
+                                    <div className="relative">
+                                        <select 
+                                            value={CATEGORIES.includes(form.category) ? form.category : (form.category ? "Other" : "")} 
+                                            onChange={(e) => {
+                                                if (e.target.value == 'Other') {
+                                                    setIsOtherCategory(true);
+                                                    setForm({ ...form, category: '' });
+                                                } else {
+                                                    setForm({ ...form, category: e.target.value });
+                                                }
+                                            }}
+                                            className={
+                                                `w-full bg-gray-800 border-none rounded-xl px-4 py-3 pr-10 cursor-pointer appearance-none focus:ring-2 focus:ring-blue-500 transition-colors 
+                                                ${form.category == '' ? 'text-gray-400' : 'text-white'}`
+                                            }
+                                        >
+                                            <option value="" disabled>Select Category</option>
+                                            {CATEGORIES.map(cat => ( <option key={cat} value={cat} className="text-white bg-gray-900">{cat}</option> ))}
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            value={form.category} 
+                                            onChange={(e) => setForm({ ...form, category: e.target.value })} 
+                                            placeholder="Enter new category" 
+                                            className="grow bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500"
+                                            autoFocus
+                                            required
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                setIsOtherCategory(false);
+                                                setForm({ ...form, category: '' });
+                                            }}
+                                            className="px-3 bg-gray-800 text-gray-400 hover:text-white rounded-xl transition border border-gray-700"
+                                            title="Back to list"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                             <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="Amount (IDR)" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 shadow-inner" required />
-                            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500">
-                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
                             <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" />
                             <div className="relative" ref={formDateRef}>
                                 <button type="button" onClick={() => setIsFormDatePickerOpen(!isFormDatePickerOpen)} className="w-full bg-gray-800 text-left px-4 py-3 rounded-xl text-white text-sm flex items-center justify-between border border-transparent focus:border-blue-500 transition">

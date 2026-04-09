@@ -11,11 +11,13 @@ import {
     PackagePlus, PackageMinus, RefreshCw
 } from 'lucide-react';
 
+const CATEGORIES = ['Apparel', 'Electronics', 'Groceries', 'Hardware & Tools', 'Health & Beauty', 'Homecare', 'Snacks & Beverages', 'Stationery', 'Tobacco'];
+
 const defaultStockForm = {
     item_name: '',
     category: '',
     unit: '',
-    current_stock: '0',
+    current_stock: '',
 };
 
 const defaultMovementForm = {
@@ -55,6 +57,7 @@ export default function StockPage() {
     } | null>(null);
     const [history, setHistory] = useState<StockHistory[]>([]);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+    const [isOtherCategory, setIsOtherCategory] = useState(false);
 
     const multiFilterRef = useRef<HTMLDivElement>(null);
 
@@ -148,6 +151,7 @@ export default function StockPage() {
             setForm(defaultStockForm);
             setShowForm(false);
             setEditId(null);
+            setIsOtherCategory(false);
             fetchStocks();
         } catch (err: any) {
             setError(err.response?.data?.message || 'Something went wrong');
@@ -157,6 +161,7 @@ export default function StockPage() {
     };
 
     const handleEdit = (stock: Stock) => {
+        const isPredefined = CATEGORIES.includes(stock.category ?? '');
         setForm({
             item_name: stock.item_name,
             category: stock.category ?? '',
@@ -164,6 +169,7 @@ export default function StockPage() {
             current_stock: String(stock.current_stock),
         });
         setEditId(stock.id);
+        setIsOtherCategory(stock.category ? !isPredefined : false);
         setShowForm(true);
     };
 
@@ -419,22 +425,58 @@ export default function StockPage() {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            <input type="text" value={form.item_name} onChange={(e) => setForm({ ...form, item_name: e.target.value })} placeholder="Item Name" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" required />    
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1.5">Item Name</label>
-                                <input type="text" value={form.item_name} onChange={(e) => setForm({ ...form, item_name: e.target.value })} placeholder="e.g. Beras" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" required />    
+                                {!isOtherCategory ? (
+                                    <div className="relative text-gray-300">
+                                        <select 
+                                            value={CATEGORIES.includes(form.category) ? form.category : (form.category ? "Other" : "")} 
+                                            onChange={(e) => {
+                                                if (e.target.value == 'Other') {
+                                                    setIsOtherCategory(true);
+                                                    setForm({ ...form, category: '' });
+                                                } else {
+                                                    setForm({ ...form, category: e.target.value });
+                                                }
+                                            }}
+                                            className={
+                                                `w-full bg-gray-800 border-none rounded-xl px-4 py-3 pr-10 cursor-pointer appearance-none focus:ring-2 focus:ring-blue-500 transition-colors 
+                                                ${form.category == '' ? 'text-gray-400' : 'text-white'}`
+                                            }
+                                        >
+                                            <option value="" disabled>Select Category</option>
+                                            {CATEGORIES.map(cat => ( <option key={cat} value={cat} className="text-white bg-gray-900">{cat}</option> ))}
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            value={form.category} 
+                                            onChange={(e) => setForm({ ...form, category: e.target.value })} 
+                                            placeholder="Enter new category" 
+                                            className="grow bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500"
+                                            autoFocus
+                                            required
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                setIsOtherCategory(false);
+                                                setForm({ ...form, category: '' });
+                                            }}
+                                            className="px-3 bg-gray-800 text-gray-400 hover:text-white rounded-xl transition border border-gray-700"
+                                            title="Back to list"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1.5">Category</label>
-                                <input type="text" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g Sembako (optional)" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1.5">Unit</label>
-                                <input type="text" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="e.g. kg, pcs, liter" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1.5">Initial Stock</label>
-                                <input type="number" value={form.current_stock} onChange={(e) => setForm({ ...form, current_stock: e.target.value })} placeholder="Initial Stock" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" required />
-                            </div>
+                            <input type="text" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="e.g. kg, pcs, liter" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500" required />
+                            <input type="number" value={form.current_stock} onChange={(e) => setForm({ ...form, current_stock: e.target.value })} placeholder="Initial Stock" className="w-full bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 shadow-inner" required />
                             <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/30 transition">
                                 {isSubmitting ? 'Saving...' : editId ? 'Update Item' : 'Save Item'}
                             </button>
