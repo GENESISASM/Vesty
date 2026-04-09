@@ -16,6 +16,7 @@ export class DebtService {
             item_name: string;
             quantity: number;
             unit: string;
+            category?: string;
             price_per_unit?: number;
             total_price?: number;
         }[];
@@ -67,7 +68,8 @@ export class DebtService {
                                 user_id: userId,
                                 item_name: item.item_name,
                                 unit: item.unit,
-                                current_stock: 100,
+                                category: item.category ?? null,
+                                current_stock: 1000,
                             },
                         });
                     }
