@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
@@ -19,13 +19,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/v1', router);
 
 // Health check
-app.get('/', (req, res) => {
-  res.json({ message: '🚀 Vesty API is running!' });
+app.get('/', (req: Request, res: Response) => {
+  res.json({ 
+    message: '🚀 Vesty API is running on Vercel!',
+    environment: process.env.NODE_ENV 
+  });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV != 'production') {
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on http://localhost:${PORT}`);
+  });
+}
 
 export default app;
