@@ -323,11 +323,12 @@ export default function StockPage() {
                 </button>
 
                 {/* Add Record */}
-                <div className="w-full md:w-auto order-1 md:order-2 flex justify-end">
-                    <button onClick={() => setShowForm(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20">
-                        <Plus size={18} /> <span className="hidden md:inline">Add Item</span>
-                    </button>
-                </div>
+                <button onClick={() => setShowForm(true)} 
+                    className="shrink-0 flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20"
+                >
+                    <Plus size={18} />
+                    <span className="hidden md:inline">Add Item</span>
+                </button>
             </div>
 
             {/* Table */}

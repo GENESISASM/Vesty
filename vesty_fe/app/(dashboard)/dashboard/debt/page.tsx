@@ -858,7 +858,7 @@ export default function DebtPage() {
                                 <div className="relative" ref={dueDateRef}>
                                     <label className="text-gray-500 text-xs mb-1.5 block">Due Date (optional)</label>
                                     <button type="button" onClick={() => setIsDueDateOpen(!isDueDateOpen)} className="w-full bg-gray-800 text-left px-4 py-3 rounded-xl text-white text-sm flex items-center justify-between border border-transparent focus:ring-2 focus:ring-blue-500 transition">
-                                        <span className={form.due_date ? "text-white" : "text-gray-500"}>{form.due_date ? formatDate(new Date(form.due_date)) : "Select Due Date"}</span>
+                                        <span className={form.due_date ? "text-white" : "text-gray-500"}>{form.due_date ? formatDate(new Date(form.due_date)) : "Due Date"}</span>
                                         <CalendarDays size={18} className="text-gray-500" />
                                     </button>
                                     {isDueDateOpen && (
