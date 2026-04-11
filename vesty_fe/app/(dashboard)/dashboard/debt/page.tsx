@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import axiosInstance from '@/lib/axios';
 import { Debt, DebtSummary } from '@/lib/types';
 import {
-    Search, Trash2, Plus, X,
+    Search, Trash2, Plus, X, Pencil,
     ChevronsUpDown, ChevronUp, ChevronDown,
     Filter, ChevronRight, Check, Wallet, CalendarDays,
     Package, CreditCard, RefreshCw, CheckCircle2,
@@ -85,6 +85,7 @@ export default function DebtPage() {
     const [isDateOpen, setIsDateOpen] = useState(false);
     const [isDueDateOpen, setIsDueDateOpen] = useState(false);
     const [isPaymentDateOpen, setIsPaymentDateOpen] = useState(false);
+    const [editId, setEditId] = useState<string | null>(null);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
@@ -241,6 +242,30 @@ export default function DebtPage() {
         return result;
     }, [debts, searchQuery, sortConfig, activeFilters, dateRange]);
 
+    const handleEdit = (debt: Debt) => {
+        setForm({
+            debtor_name: debt.debtor_name,
+            type: debt.type,
+            notes: debt.notes || '',
+            date: new Date(debt.date).toISOString().split('T')[0],
+            due_date: debt.due_date ? new Date(debt.due_date).toISOString().split('T')[0] : '',
+            amount: debt.type == 'money' && debt.debt_money ? String(debt.debt_money.amount) : '',
+            items: debt.type == 'item' && debt.debt_items && debt.debt_items.length > 0
+                ? debt.debt_items.map(item => ({
+                    item_name: item.item_name,
+                    quantity: String(item.quantity),
+                    unit: item.unit,
+                    price_per_unit: item.price_per_unit ? String(item.price_per_unit) : '',
+                    total_price: item.total_price ? String(item.total_price) : '',
+                    category: item.category || '', 
+                    isOtherCategory: item.category ? !STOCK_CATEGORIES.includes(item.category) : false
+                }))
+                : [defaultDebtForm.items[0]]
+        });
+        setEditId(debt.id);
+        setShowForm(true);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -267,9 +292,15 @@ export default function DebtPage() {
                 }));
             }
 
-            await axiosInstance.post('/debt/create', payload);
+            if (editId) {
+                await axiosInstance.put(`/debt/update/${editId}`, payload);
+            } else {
+                await axiosInstance.post('/debt/create', payload);
+            }
+
             setShowForm(false);
             setForm(defaultDebtForm);
+            setEditId(null);
             fetchData();
         } catch (err: any) {
             const errorMessage = err.response?.data?.message 
@@ -648,6 +679,9 @@ export default function DebtPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-1">
+                                                    <button onClick={() => handleEdit(debt)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition" title="Edit">
+                                                        <Pencil size={16} />
+                                                    </button>
                                                     <button onClick={() => setDetailDebt(debt)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition" title="Detail">
                                                         <CreditCard size={16} />
                                                     </button>
@@ -679,8 +713,8 @@ export default function DebtPage() {
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-white font-bold text-xl">New Debt</h3>
-                            <button onClick={() => { setShowForm(false); setForm(defaultDebtForm); setFormError(null); }} className="text-gray-500 hover:text-white"><X size={20} /></button>
+                            <h3 className="text-white font-bold text-xl">{editId ? 'Edit Debt' : 'New Debt'}</h3>
+                            <button onClick={() => { setShowForm(false); setForm(defaultDebtForm); setFormError(null); setEditId(null); }} className="text-gray-500 hover:text-white"><X size={20} /></button>
                         </div>
 
                         {formError && (
@@ -875,7 +909,7 @@ export default function DebtPage() {
                             </div>
 
                             <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/30 transition disabled:opacity-50">
-                                {isSubmitting ? 'Processing...' : 'Save Debt'}
+                                {isSubmitting ? 'Processing...' : editId ? 'Update Debt' : 'Save Debt'}
                             </button>
                         </form>
                     </div>

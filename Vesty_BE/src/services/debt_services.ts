@@ -115,7 +115,18 @@ export class DebtService {
             },
             orderBy: { date: 'desc' },
         });
-        return debts;
+        const stocks = await prisma.stock.findMany({
+            where: { user_id: userId },
+            select: { item_name: true, category: true }
+        });
+        const stockMap = new Map(stocks.map(s => [s.item_name.toLowerCase(), s.category]));
+        return debts.map(debt => ({
+            ...debt,
+            debt_items: debt.debt_items.map(item => ({
+                ...item,
+                category: stockMap.get(item.item_name.toLowerCase()) ?? null
+            }))
+        }));
     }
 
     async getDebtById(userId: string, id: string) {
@@ -134,7 +145,23 @@ export class DebtService {
             throw error;
         }
 
-        return debt;
+        const itemNames = debt.debt_items.map(i => i.item_name);
+        const stocks = await prisma.stock.findMany({
+            where: { 
+                user_id: userId,
+                item_name: { in: itemNames }
+            },
+            select: { item_name: true, category: true }
+        });
+        const stockMap = new Map(stocks.map(s => [s.item_name.toLowerCase(), s.category]));
+
+        return {
+            ...debt,
+            debt_items: debt.debt_items.map(item => ({
+                ...item,
+                category: stockMap.get(item.item_name.toLowerCase()) ?? null
+            }))
+        };
     }
 
     async updateDebtStatus(userId: string, id: string, status: 'unpaid' | 'partial' | 'paid') {

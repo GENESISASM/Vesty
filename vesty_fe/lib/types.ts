@@ -22,6 +22,7 @@ export interface Finance {
   date: string;
   created_at: string;
   updated_at: string;
+  reference_id?: string | null;
 }
 
 export interface FinanceSummary {
@@ -49,6 +50,7 @@ export interface StockHistory {
   notes?: string;
   date: string;
   created_at: string;
+  reference_id?: string | null;
 }
 export interface DebtItem {
   id: string;
@@ -59,6 +61,7 @@ export interface DebtItem {
   price_per_unit?: number;
   total_price?: number;
   created_at: string;
+  category?: string | null;
 }
 
 export interface DebtMoney {

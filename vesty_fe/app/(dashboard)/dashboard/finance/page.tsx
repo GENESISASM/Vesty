@@ -433,8 +433,30 @@ export default function FinancePage() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => handleEdit(f)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition"><Pencil size={16} /></button>
-                                                <button onClick={() => setDeleteId(f.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition"><Trash2 size={16} /></button>
+                                                <button 
+                                                    onClick={() => handleEdit(f)} 
+                                                    disabled={!!f.reference_id}
+                                                    title={f.reference_id ? "Auto-generated from Debt (Cannot edit)" : "Edit"}
+                                                    className={`p-2 rounded-lg transition ${
+                                                        f.reference_id 
+                                                            ? 'text-gray-700 cursor-not-allowed' 
+                                                            : 'text-gray-500 hover:text-blue-400 hover:bg-blue-400/10'
+                                                    }`}
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => setDeleteId(f.id)} 
+                                                    disabled={!!f.reference_id}
+                                                    title={f.reference_id ? "Auto-generated from Debt (Cannot delete)" : "Delete"}
+                                                    className={`p-2 rounded-lg transition ${
+                                                        f.reference_id 
+                                                            ? 'text-gray-700 cursor-not-allowed' 
+                                                            : 'text-gray-500 hover:text-red-400 hover:bg-red-400/10'
+                                                    }`}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
