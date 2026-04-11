@@ -32,6 +32,7 @@ model Finance {
   category    String
   description String?
   date        DateTime
+  reference_id String?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -63,6 +64,7 @@ model StockHistory {
   quantity    Int
   notes       String?
   date        DateTime
+  reference_id String?
   created_at  DateTime @default(now())
 
   stock       Stock    @relation(fields: [stock_id], references: [id])
@@ -102,7 +104,7 @@ model DebtItem {
   total_price    Decimal? @db.Decimal(15, 2)
   created_at     DateTime @default(now())
 
-  debt           Debt     @relation(fields: [debt_id], references: [id])
+  debt           Debt     @relation(fields: [debt_id], references: [id], onDelete: Cascade)
 
   @@map("debt_items")
 }
@@ -114,7 +116,7 @@ model DebtMoney {
   amount     Decimal  @db.Decimal(15, 2)
   created_at DateTime @default(now())
 
-  debt       Debt     @relation(fields: [debt_id], references: [id])
+  debt       Debt     @relation(fields: [debt_id], references: [id], onDelete: Cascade)
 
   @@map("debt_money")
 }
@@ -129,7 +131,7 @@ model DebtPayment {
   date         DateTime
   created_at   DateTime @default(now())
 
-  debt         Debt     @relation(fields: [debt_id], references: [id])
+  debt         Debt     @relation(fields: [debt_id], references: [id], onDelete: Cascade)
 
   @@map("debt_payments")
 }

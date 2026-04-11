@@ -36,10 +36,10 @@ export class DebtService {
 
             if (payload.type == 'money' && payload.amount) {
                 await tx.debtMoney.create({
-                data: {
-                    debt_id: newDebt.id,
-                    amount: payload.amount,
-                },
+                    data: {
+                        debt_id: newDebt.id,
+                        amount: payload.amount,
+                    },
                 });
             }
 
@@ -55,6 +55,7 @@ export class DebtService {
                             total_price: item.total_price ?? null,
                         },
                     });
+                    
                     let stock = await tx.stock.findFirst({
                         where: {
                             user_id: userId,
@@ -74,6 +75,17 @@ export class DebtService {
                         });
                     }
 
+                    if (stock.current_stock < item.quantity) {
+                        throw new Error(`Stok tidak cukup untuk ${item.item_name}. Tersisa: ${stock.current_stock}`);
+                    }
+
+                    await tx.stock.update({
+                        where: { id: stock.id },
+                        data: {
+                            current_stock: { decrement: item.quantity }
+                        },
+                    });
+
                     await tx.stockHistory.create({
                         data: {
                             stock_id: stock.id,
@@ -81,13 +93,7 @@ export class DebtService {
                             quantity: item.quantity,
                             notes: `Hutang ${payload.debtor_name}`,
                             date: new Date(payload.date),
-                        },
-                    });
-
-                    await tx.stock.update({
-                        where: { id: stock.id },
-                        data: {
-                            current_stock: Math.max(0, stock.current_stock - item.quantity),
+                            reference_id: newDebt.id
                         },
                     });
                 }
@@ -148,8 +154,8 @@ export class DebtService {
     }) {
         const debt = await this.getDebtById(userId, debtId);
 
-        const payment = await prisma.$transaction(async (tx) => {
-            const newPayment = await prisma.debtPayment.create({
+        return await prisma.$transaction(async (tx) => {
+            const newPayment = await tx.debtPayment.create({
                 data: {
                     debt_id: debtId,
                     amount: payload.amount,
@@ -168,11 +174,12 @@ export class DebtService {
                         category: 'Debt Payment',
                         description: `Pembayaran hutang dari ${debt.debtor_name}`,
                         date: new Date(payload.date),
+                        reference_id: debtId
                     },
                 });
             }
 
-            const allPayments = await prisma.debtPayment.findMany({
+            const allPayments = await tx.debtPayment.findMany({
                 where: { debt_id: debtId },
             });
 
@@ -192,15 +199,13 @@ export class DebtService {
                 newStatus = 'partial';
             }
 
-            await prisma.debt.update({
+            await tx.debt.update({
                 where: { id: debtId },
                 data: { status: newStatus },
             });
 
             return newPayment;
         })
-
-        return payment;
     }
 
     async getPayments(userId: string, debtId: string) {
@@ -213,15 +218,44 @@ export class DebtService {
     }
 
     async deleteDebt(userId: string, id: string) {
-        await this.getDebtById(userId, id);
+        const debt = await prisma.debt.findFirst({
+            where: { id, user_id: userId },
+            include: { debt_items: true } 
+        });
 
-        await prisma.$transaction([
-            prisma.debtPayment.deleteMany({ where: { debt_id: id } }),
-            prisma.debtItem.deleteMany({ where: { debt_id: id } }),
-            prisma.debtMoney.deleteMany({ where: { debt_id: id } }),
-            prisma.debt.delete({ where: { id } }),
-        ]);
+        if (!debt) {
+            throw new Error('Debt not found')
+        }
 
+        await prisma.$transaction(async (tx) => {
+            if (debt.type == 'item') {
+                for (const item of debt.debt_items) {
+                    const stock = await tx.stock.findFirst({
+                        where: { 
+                            user_id: userId, 
+                            item_name: { equals: item.item_name, mode: 'insensitive' } 
+                        }
+                    });
+
+                    if (stock) {
+                        await tx.stock.update({
+                            where: { id: stock.id },
+                            data: { current_stock: { increment: item.quantity } }
+                        });
+                    }
+                }
+            }
+
+            await tx.finance.deleteMany({
+                where: { reference_id: id }
+            });
+            await tx.stockHistory.deleteMany({
+                where: { reference_id: id }
+            });
+
+            await tx.debt.delete({ where: { id } });
+        });
+        
         return true;
     }
 

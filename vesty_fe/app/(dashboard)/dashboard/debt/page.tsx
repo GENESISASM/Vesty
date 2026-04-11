@@ -272,7 +272,12 @@ export default function DebtPage() {
             setForm(defaultDebtForm);
             fetchData();
         } catch (err: any) {
-            setFormError(err.response?.data?.message || 'Something went wrong');
+            const errorMessage = err.response?.data?.message 
+                || err.response?.data?.error 
+                || err.message 
+                || 'Gagal menyimpan hutang. Cek kembali input Anda.';
+            
+            setFormError(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
@@ -1023,7 +1028,10 @@ export default function DebtPage() {
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl">
                         <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"><Trash2 size={30} /></div>
                         <h3 className="text-white font-bold text-lg mb-2">Delete Debt?</h3>
-                        <p className="text-gray-500 text-sm mb-8">All payment history will also be deleted.</p>
+                        <p className="text-gray-500 text-sm mb-8">
+                            All payment history will be deleted. <br/>
+                            <span className="text-blue-400 font-medium">Any reduced stock and finance income will be automatically restored.</span>
+                        </p>
                         <div className="grid grid-cols-2 gap-3">
                             <button onClick={() => setDeleteId(null)} className="py-3 bg-gray-800 text-white rounded-xl font-bold">Cancel</button>
                             <button onClick={() => handleDelete(deleteId)} className="py-3 bg-red-600 text-white rounded-xl font-bold">Delete</button>
