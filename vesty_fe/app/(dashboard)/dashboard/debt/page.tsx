@@ -15,7 +15,15 @@ import 'react-day-picker/dist/style.css';
 
 const STATUS_OPTIONS = ['unpaid', 'partial', 'paid'];
 const TYPE_OPTIONS = ['money', 'item'];
-const STOCK_CATEGORIES = ['Accessories', 'Apparel', 'Groceries', 'Hardware & Tools', 'Health & Beauty', 'Homecare', 'Snacks & Beverages', 'Stationery', 'Tobacco'];
+const STOCK_CATEGORIES = [
+    'Accessories', 'Apparel', 'Groceries',
+    'Hardware & Tools', 'Health & Beauty', 
+    'Homecare', 'Snacks & Beverages', 'Stationery', 'Tobacco'
+];
+const STOCK_UNIT = [
+    'pcs', 'pack', 'bottle', 'lembar', 'sachet',
+    'rim', 'meter', 'bungkus', 'set', 'box'
+];
 
 const statusConfig = {
     unpaid: { label: 'Unpaid', color: 'text-red-400', bg: 'bg-red-400/10', icon: AlertCircle },
@@ -34,6 +42,7 @@ const defaultDebtForm = {
         item_name: '',
         quantity: '',
         unit: '',
+        isOtherUnit: false,
         price_per_unit: '',
         total_price: '',
         category: '',
@@ -255,6 +264,7 @@ export default function DebtPage() {
                     item_name: item.item_name,
                     quantity: String(item.quantity),
                     unit: item.unit,
+                    isOtherUnit: item.unit ? !STOCK_UNIT.includes(item.unit) : false,
                     price_per_unit: item.price_per_unit ? String(item.price_per_unit) : '',
                     total_price: item.total_price ? String(item.total_price) : '',
                     category: item.category || '', 
@@ -346,13 +356,14 @@ export default function DebtPage() {
     const addItem = () => {
         setForm(prev => ({
             ...prev,
-            items: [...prev.items, { 
-                item_name: '', 
-                quantity: '', 
-                unit: '', 
-                price_per_unit: '', 
-                total_price: '', 
-                category: '', 
+            items: [...prev.items, {
+                item_name: '',
+                quantity: '',
+                unit: '',
+                isOtherUnit: false,
+                price_per_unit: '',
+                total_price: '',
+                category: '',
                 isOtherCategory: false
             }],
         }));
@@ -838,14 +849,55 @@ export default function DebtPage() {
                                                     className="w-full bg-gray-800 border-none rounded-xl px-4 py-2.5 text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-blue-500"
                                                     required
                                                 />
-                                                <input
-                                                    type="text"
-                                                    value={item.unit}
-                                                    onChange={(e) => updateItem(index, 'unit', e.target.value)}
-                                                    placeholder="Unit (kg, pcs)"
-                                                    className="w-full bg-gray-800 border-none rounded-xl px-4 py-2.5 text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-blue-500"
-                                                    required
-                                                />
+                                                
+                                                {/* Mulai logika dropdown Unit */}
+                                                {!item.isOtherUnit ? (
+                                                    <div className="relative">
+                                                        <select
+                                                            value={STOCK_UNIT.includes(item.unit) ? item.unit : (item.unit ? 'Other' : '')}
+                                                            onChange={(e) => {
+                                                                if (e.target.value == 'Other') {
+                                                                    updateItem(index, 'isOtherUnit', true);
+                                                                    updateItem(index, 'unit', '');
+                                                                } else {
+                                                                    updateItem(index, 'unit', e.target.value);
+                                                                }
+                                                            }}
+                                                            className={`w-full bg-gray-800 border-none rounded-xl px-4 py-2.5 pr-10 cursor-pointer appearance-none text-sm focus:ring-2 focus:ring-blue-500 transition-colors ${item.unit == '' ? 'text-gray-500' : 'text-white'}`}
+                                                            required
+                                                        >
+                                                            <option value="" disabled>Select Unit</option>
+                                                            {STOCK_UNIT.map(u => (
+                                                                <option key={u} value={u} className="text-white bg-gray-900">{u}</option>
+                                                            ))}
+                                                            <option value="Other">Other</option>
+                                                        </select>
+                                                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-2 w-full items-center">
+                                                        <input
+                                                            type="text"
+                                                            value={item.unit}
+                                                            onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                                                            placeholder="Enter unit"
+                                                            className="grow min-w-0 bg-gray-800 border-none rounded-xl px-4 py-2.5 text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-blue-500"
+                                                            autoFocus
+                                                            required
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                updateItem(index, 'isOtherUnit', false);
+                                                                updateItem(index, 'unit', '');
+                                                            }}
+                                                            className="shrink-0 w-10 h-10 flex items-center justify-center bg-gray-800 text-gray-400 hover:text-white rounded-xl transition border border-gray-700"
+                                                            title="Back to list"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="grid grid-cols-2 gap-2">
                                                 <input
