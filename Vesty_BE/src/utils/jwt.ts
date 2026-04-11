@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
-const JWT_EXPIRES_IN = '7d';
+const JWT_EXPIRES_IN = '1d';
 
 export interface JwtPayload {
     id: string;
