@@ -15,7 +15,7 @@ import 'react-day-picker/dist/style.css';
 
 const STATUS_OPTIONS = ['unpaid', 'partial', 'paid'];
 const TYPE_OPTIONS = ['money', 'item'];
-const STOCK_CATEGORIES = ['Apparel', 'Electronics', 'Groceries', 'Hardware & Tools', 'Health & Beauty', 'Homecare', 'Snacks & Beverages', 'Stationery', 'Tobacco'];
+const STOCK_CATEGORIES = ['Accessories', 'Apparel', 'Groceries', 'Hardware & Tools', 'Health & Beauty', 'Homecare', 'Snacks & Beverages', 'Stationery', 'Tobacco'];
 
 const statusConfig = {
     unpaid: { label: 'Unpaid', color: 'text-red-400', bg: 'bg-red-400/10', icon: AlertCircle },
