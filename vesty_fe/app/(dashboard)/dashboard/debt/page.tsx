@@ -680,12 +680,12 @@ export default function DebtPage() {
                                                 {paid > 0 ? (
                                                     <span className="text-green-400 font-medium">{formatCurrency(paid)}</span>
                                                 ) : (
-                                                    <span className="text-gray-600">-</span>
+                                                    <span className="text-white">-</span>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div>
-                                                    <p className="text-white font-medium text-sm">{debt.notes}</p>
+                                                    <p className="text-white font-medium text-sm">{debt.notes || '-'}</p>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
