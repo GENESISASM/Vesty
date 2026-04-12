@@ -47,6 +47,17 @@ export class DebtController {
         }
     }
 
+    static async updateDebt(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user!.id;
+            const id = req.params.id as string;
+            await DebtService.getService().updateDebt(userId, id, req.body);
+            return res.status(200).json(responseBuilder(true, '200', null, 'Debt updated successfully'));
+        } catch (err: any) {
+            return res.status(400).json(responseBuilder(false, err.code ?? '400', null, err.message));
+        }
+    }
+
     static async addPayment(req: AuthRequest, res: Response) {
         try {
             const userId = req.user!.id;

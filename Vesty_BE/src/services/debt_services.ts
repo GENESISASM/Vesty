@@ -173,6 +173,157 @@ export class DebtService {
         });
     }
 
+    async updateDebt(userId: string, id: string, payload: {
+        debtor_name: string;
+        type: 'money' | 'item';
+        notes?: string;
+        date: string;
+        due_date?: string;
+        amount?: number;
+        items?: {
+            item_name: string;
+            quantity: number;
+            unit: string;
+            category?: string;
+            price_per_unit?: number;
+            total_price?: number;
+        }[];
+    }) {
+        const existingDebt = await prisma.debt.findFirst({
+            where: { id, user_id: userId },
+            include: { debt_items: true, debt_money: true }
+        });
+
+        if (!existingDebt) {
+            const error: any = new Error('Debt not found');
+            error.code = '404';
+            throw error;
+        }
+
+        // if (existingDebt.status != 'unpaid') {
+        //     return await prisma.debt.update({
+        //         where: { id },
+        //         data: {
+        //             debtor_name: payload.debtor_name,
+        //             notes: payload.notes ?? null,
+        //             due_date: payload.due_date ? new Date(payload.due_date) : null,
+        //         },
+        //     });
+        // }
+
+        return await prisma.$transaction(async (tx) => {
+            await tx.debt.update({
+                where: { id },
+                data: {
+                    debtor_name: payload.debtor_name,
+                    type: payload.type,
+                    notes: payload.notes ?? null,
+                    date: new Date(payload.date),
+                    due_date: payload.due_date ? new Date(payload.due_date) : null,
+                },
+            });
+
+            if (existingDebt.type == 'money') {
+                await tx.debtMoney.deleteMany({ where: { debt_id: id } });
+            } else if (existingDebt.type == 'item') {
+                for (const oldItem of existingDebt.debt_items) {
+                    const stock = await tx.stock.findFirst({
+                        where: { user_id: userId, item_name: { equals: oldItem.item_name, mode: 'insensitive' } }
+                    });
+                    if (stock) {
+                        await tx.stock.update({
+                            where: { id: stock.id },
+                            data: { current_stock: { increment: oldItem.quantity } }
+                        });
+                    }
+                }
+                await tx.debtItem.deleteMany({ where: { debt_id: id } });
+                await tx.stockHistory.deleteMany({ 
+                    where: { reference_id: id, type: 'out' } 
+                });
+            }
+
+            if (payload.type == 'money' && payload.amount) {
+                await tx.debtMoney.create({
+                    data: { debt_id: id, amount: payload.amount },
+                });
+            } else if (payload.type == 'item' && payload.items && payload.items.length > 0) {
+                for (const item of payload.items) {
+                    await tx.debtItem.create({
+                        data: {
+                            debt_id: id,
+                            item_name: item.item_name,
+                            quantity: item.quantity,
+                            unit: item.unit,
+                            price_per_unit: item.price_per_unit ?? null,
+                            total_price: item.total_price ?? null,
+                        },
+                    });
+                    
+                    let stock = await tx.stock.findFirst({
+                        where: { user_id: userId, item_name: { equals: item.item_name, mode: 'insensitive' } },
+                    });
+
+                    if (!stock) {
+                        stock = await tx.stock.create({
+                            data: {
+                                user_id: userId,
+                                item_name: item.item_name,
+                                unit: item.unit,
+                                category: item.category ?? null,
+                                current_stock: 1000,
+                            },
+                        });
+                    }
+
+                    if (stock.current_stock < item.quantity) {
+                        throw new Error(`Stok tidak cukup untuk ${item.item_name}. Tersisa: ${stock.current_stock}`);
+                    }
+
+                    await tx.stock.update({
+                        where: { id: stock.id },
+                        data: { current_stock: { decrement: item.quantity } },
+                    });
+
+                    await tx.stockHistory.create({
+                        data: {
+                            stock_id: stock.id,
+                            type: 'out',
+                            quantity: item.quantity,
+                            notes: `Hutang ${payload.debtor_name} (Edited)`,
+                            date: new Date(payload.date),
+                            reference_id: id
+                        },
+                    });
+                }
+            }
+
+            const allPayments = await tx.debtPayment.findMany({ where: { debt_id: id } });
+            const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+            
+            let totalDebt = 0;
+            if (payload.type == 'money' && payload.amount) {
+                totalDebt = Number(payload.amount);
+            } else if (payload.type == 'item' && payload.items) {
+                totalDebt = payload.items.reduce((sum, item) => sum + Number(item.total_price ?? 0), 0);
+            }
+
+            let newStatus: 'unpaid' | 'partial' | 'paid' = 'unpaid';
+            if (totalPaid >= totalDebt && totalDebt > 0) {
+                newStatus = 'paid';
+            } else if (totalPaid > 0) {
+                newStatus = 'partial';
+            }
+
+            await tx.debt.update({
+                where: { id },
+                data: { status: newStatus },
+            });
+
+            return true;
+        });
+    }
+
     async addPayment(userId: string, debtId: string, payload: {
         amount: number;
         payment_type: 'money' | 'item';

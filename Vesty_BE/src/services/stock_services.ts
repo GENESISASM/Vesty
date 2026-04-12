@@ -47,6 +47,7 @@ export class StockService {
         item_name?: string;
         category?: string;
         unit?: string;
+        current_stock?: number;
     }) {
         await this.getStockById(userId, id);
         let stock = await prisma.stock.update({
@@ -55,6 +56,7 @@ export class StockService {
                 ...(payload.item_name && { item_name: payload.item_name }),
                 ...(payload.category != undefined && { category: payload.category }),
                 ...(payload.unit && { unit: payload.unit }),
+                ...(payload.current_stock != undefined && { current_stock: Number(payload.current_stock) }),
             },
         });
 

@@ -36,6 +36,12 @@ const debtRoutes = [
         controller: DebtController.updateDebtStatus,
     },
     {
+        method: 'put',
+        route: '/update/:id',
+        middleware: authMiddleware,
+        controller: DebtController.updateDebt,
+    },
+    {
         method: 'post',
         route: '/:id/pay',
         middleware: authMiddleware,
