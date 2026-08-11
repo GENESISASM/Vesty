@@ -105,8 +105,8 @@ export default function DashboardPage() {
     const filteredFinances = getFilteredFinances();
 
     const currentSummary = {
-        totalIncome: filteredFinances.filter(f => f.type == 'income').reduce((sum, f) => sum + Number(f.amount), 0),
-        totalExpense: filteredFinances.filter(f => f.type == 'expense').reduce((sum, f) => sum + Number(f.amount), 0),
+        totalIncome: finances.filter(f => f.type == 'income').reduce((sum, f) => sum + Number(f.amount), 0),
+        totalExpense: finances.filter(f => f.type == 'expense').reduce((sum, f) => sum + Number(f.amount), 0),
         get balance() { return this.totalIncome - this.totalExpense; }
     };
 
