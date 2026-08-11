@@ -7,7 +7,8 @@ import {
     Search, Pencil, Trash2,
     Plus, CalendarDays, X,
     ChevronsUpDown, ChevronUp, ChevronDown,
-    Filter, ChevronRight, Check, RefreshCw
+    Filter, ChevronRight, Check, RefreshCw, 
+    ChevronLeft
 } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -173,6 +174,22 @@ export default function FinancePage() {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return processedFinances.slice(startIndex, startIndex + itemsPerPage);
     }, [processedFinances, currentPage]);
+
+    const getPageNumbers = () => {
+        const pages = [];
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            if (currentPage <= 3) {
+                pages.push(1, 2, 3, 4, '...', totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+            } else {
+                pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+            }
+        }
+        return pages;
+    };
 
     const handleCancel = () => {
         setForm(defaultForm);
@@ -476,29 +493,48 @@ export default function FinancePage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Button Pagination */}
                 {totalPages > 1 && (
                     <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-900 border-t border-gray-800 gap-4">
                         <span className="text-sm text-gray-400">
-                            Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedFinances.length)} dari total {processedFinances.length} transaksi
+                            displays {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedFinances.length)} From {processedFinances.length}
                         </span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="px-3 py-1.5 text-sm bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                disabled={currentPage == 1}
+                                className="flex items-center gap-1 px-2 py-2 text-[15px] font-semibold text-blue-500 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition bg-transparent"
                             >
-                                Sebelumnya
+                                <ChevronLeft size={18} strokeWidth={2.5} /> Previous
                             </button>
-                            <div className="flex items-center gap-1">
-                                <span className="text-sm text-white px-3 py-1 bg-gray-800 rounded-md font-bold">{currentPage}</span>
-                                <span className="text-sm text-gray-500">/ {totalPages}</span>
+
+                            <div className="flex items-center gap-1 mx-2">
+                                {getPageNumbers().map((page, index) => (
+                                    page == '...' ? (
+                                        <span key={`ellipsis-${index}`} className="px-2 py-2 text-white font-bold tracking-widest">...</span>
+                                    ) : (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentPage(page as number)}
+                                            className={`min-w-9.5 h-9.5 flex items-center justify-center rounded-xl text-[15px] font-bold transition-all ${
+                                                currentPage == page 
+                                                    ? 'bg-gray-800 border border-gray-700 text-white shadow-sm'
+                                                    : 'text-blue-500 hover:bg-gray-800/40 hover:text-blue-400 bg-transparent'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    )
+                                ))}
                             </div>
+
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                className="px-3 py-1.5 text-sm bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                disabled={currentPage == totalPages}
+                                className="flex items-center gap-1 px-2 py-2 text-[15px] font-semibold text-blue-500 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition bg-transparent"
                             >
-                                Selanjutnya
+                                Next <ChevronRight size={18} strokeWidth={2.5} />
                             </button>
                         </div>
                     </div>
