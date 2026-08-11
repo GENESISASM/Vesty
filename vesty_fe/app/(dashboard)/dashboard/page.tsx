@@ -81,11 +81,19 @@ export default function DashboardPage() {
 
     const getFilteredFinances = useCallback((): Finance[] => {
         if (!finances.length) return [];
-        if (!dateRange?.from || !dateRange?.to) return finances;
+        
+        let start: Date;
+        let end: Date;
+        if (!dateRange?.from || !dateRange?.to) {
+            end = new Date();
+            start = new Date();
+            start.setMonth(start.getMonth() - 12)
+        } else {
+            start = new Date(dateRange.from);
+            end = new Date(dateRange.to);
+        }
 
-        const start = new Date(dateRange.from);
         start.setHours(0, 0, 0, 0);
-        const end = new Date(dateRange.to);
         end.setHours(23, 59, 59, 999);
 
         return finances.filter(f => {
