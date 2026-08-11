@@ -55,7 +55,9 @@ export default function FinancePage() {
     });
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
     const [isOtherCategory, setIsOtherCategory] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
+    const itemsPerPage = 100;
     const formDateRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
@@ -124,8 +126,8 @@ export default function FinancePage() {
     const toggleFilter = (group: 'types' | 'categories', value: string) => {
         setActiveFilters(prev => {
             const current = prev[group];
-            const next = current.includes(value) 
-                ? current.filter(item => item != value) 
+            const next = current.includes(value)
+                ? current.filter(item => item != value)
                 : [...current, value];
             return { ...prev, [group]: next };
         });
@@ -162,6 +164,16 @@ export default function FinancePage() {
         return result;
     }, [finances, searchQuery, dateRange, sortConfig, activeFilters]);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, dateRange, sortConfig, activeFilters]);
+
+    const totalPages = Math.ceil(processedFinances.length / itemsPerPage);
+    const paginatedFinances = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return processedFinances.slice(startIndex, startIndex + itemsPerPage);
+    }, [processedFinances, currentPage]);
+
     const handleCancel = () => {
         setForm(defaultForm);
         setShowForm(false);
@@ -178,7 +190,7 @@ export default function FinancePage() {
             const payload = { ...form, amount: Number(form.amount) };
             if (editId) {
                 await axiosInstance.put(`/finance/update/${editId}`, payload);
-            } else { 
+            } else {
                 await axiosInstance.post('/finance/create', payload);
             }
             setIsOtherCategory(false);
@@ -216,16 +228,15 @@ export default function FinancePage() {
     const totalActiveFilters = activeFilters.types.length + activeFilters.categories.length;
 
     const CustomCheckbox = ({ checked, onChange, label }: { checked: boolean, onChange: () => void, label: string }) => (
-        <div 
+        <div
             className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group"
             onClick={(e) => {
                 e.stopPropagation();
                 onChange();
             }}
         >
-            <div className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-all ${
-                checked ? 'bg-blue-600 border-blue-600' : 'border-gray-600 group-hover:border-gray-400'
-            }`}>
+            <div className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center transition-all ${checked ? 'bg-blue-600 border-blue-600' : 'border-gray-600 group-hover:border-gray-400'
+                }`}>
                 {checked && <Check size={12} className="text-white" strokeWidth={4} />}
             </div>
             <span className={`text-sm transition-colors ${checked ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
@@ -241,7 +252,7 @@ export default function FinancePage() {
                 {/* Search */}
                 <div className="relative grow min-w-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                    <input 
+                    <input
                         type="text"
                         placeholder="Search"
                         className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
@@ -254,9 +265,8 @@ export default function FinancePage() {
                 <div className="relative shrink-0" ref={dropdownRef}>
                     <button
                         onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
-                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
-                            isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                        }`}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                            }`}
                     >
                         <CalendarDays size={18} className="text-gray-400" />
                         <span className="hidden md:inline">{dateRange?.from && dateRange?.to ? `${formatDateLabel(dateRange.from)} – ${formatDateLabel(dateRange.to)}` : 'Date'}</span>
@@ -290,11 +300,10 @@ export default function FinancePage() {
                             setIsMultiFilterOpen(!isMultiFilterOpen);
                             setActiveSubmenu(null);
                         }}
-                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
-                            isMultiFilterOpen || totalActiveFilters > 0
-                            ? 'bg-gray-800 border-blue-500 text-white' 
-                            : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                        }`}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${isMultiFilterOpen || totalActiveFilters > 0
+                                ? 'bg-gray-800 border-blue-500 text-white'
+                                : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                            }`}
                     >
                         <Filter size={18} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
                         <span className="hidden md:inline">Filters</span>
@@ -309,7 +318,7 @@ export default function FinancePage() {
                         <div className="absolute right-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
                             {/* Type Filter */}
                             <div className="relative group">
-                                <div 
+                                <div
                                     className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
                                     onClick={() => {
                                         if (window.innerWidth < 768) {
@@ -320,7 +329,7 @@ export default function FinancePage() {
                                     <span className="font-medium">Type</span>
                                     <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'type' ? 'rotate-90' : ''}`} />
                                 </div>
-                                
+
                                 <div className={`
                                     bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
                                     ${activeSubmenu == 'type' ? 'block' : 'hidden md:group-hover:block'}
@@ -333,7 +342,7 @@ export default function FinancePage() {
 
                             {/* Category Filter */}
                             <div className="relative group border-t border-gray-800/50 md:border-t-0">
-                                <div 
+                                <div
                                     className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
                                     onClick={() => {
                                         if (window.innerWidth < 768) {
@@ -344,7 +353,7 @@ export default function FinancePage() {
                                     <span className="font-medium">Category</span>
                                     <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'category' ? 'rotate-90' : ''}`} />
                                 </div>
-                                
+
                                 <div className={`
                                     bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-52 py-1 max-h-60 overflow-y-auto custom-scrollbar
                                     ${activeSubmenu == 'category' ? 'block' : 'hidden md:group-hover:block'}
@@ -357,11 +366,11 @@ export default function FinancePage() {
 
                             {totalActiveFilters > 0 && (
                                 <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
-                                    <button 
+                                    <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setActiveFilters({ types: [], categories: [] });
-                                        }} 
+                                        }}
                                         className="w-full text-center py-2 text-xs font-semibold text-red-400 hover:text-red-300"
                                     >
                                         Clear All
@@ -381,8 +390,8 @@ export default function FinancePage() {
                 </button>
 
                 {/* Add Transaction */}
-                <button 
-                    onClick={() => setShowForm(true)} 
+                <button
+                    onClick={() => setShowForm(true)}
                     className="shrink-0 flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20"
                 >
                     <Plus size={18} />
@@ -416,13 +425,13 @@ export default function FinancePage() {
                         </thead>
                         <tbody className="divide-y divide-gray-800 text-center">
                             {isLoading ? (
-                                [1,2,3].map(i => (
+                                [1, 2, 3].map(i => (
                                     <tr key={i} className="animate-pulse">
                                         <td colSpan={6} className="px-6 py-4"><div className="h-12 bg-gray-800/50 rounded-lg" /></td>
                                     </tr>
                                 ))
-                            ) : processedFinances.length > 0 ? (
-                                processedFinances.map((f) => (
+                            ) : paginatedFinances.length > 0 ? (
+                                paginatedFinances.map((f) => (
                                     <tr key={f.id} className="hover:bg-gray-800/30 transition-colors group">
                                         <td className="px-6 py-4 text-gray-100 text-sm capitalize">{f.type}</td>
                                         <td className="px-6 py-4 text-gray-100 text-sm">{f.category}</td>
@@ -433,27 +442,25 @@ export default function FinancePage() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center gap-1">
-                                                <button 
-                                                    onClick={() => handleEdit(f)} 
+                                                <button
+                                                    onClick={() => handleEdit(f)}
                                                     disabled={!!f.reference_id}
                                                     title={f.reference_id ? "Auto-generated from Debt (Cannot edit)" : "Edit"}
-                                                    className={`p-2 rounded-lg transition ${
-                                                        f.reference_id 
-                                                            ? 'text-gray-700 cursor-not-allowed' 
+                                                    className={`p-2 rounded-lg transition ${f.reference_id
+                                                            ? 'text-gray-700 cursor-not-allowed'
                                                             : 'text-gray-500 hover:text-blue-400 hover:bg-blue-400/10'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <Pencil size={16} />
                                                 </button>
-                                                <button 
-                                                    onClick={() => setDeleteId(f.id)} 
+                                                <button
+                                                    onClick={() => setDeleteId(f.id)}
                                                     disabled={!!f.reference_id}
                                                     title={f.reference_id ? "Auto-generated from Debt (Cannot delete)" : "Delete"}
-                                                    className={`p-2 rounded-lg transition ${
-                                                        f.reference_id 
-                                                            ? 'text-gray-700 cursor-not-allowed' 
+                                                    className={`p-2 rounded-lg transition ${f.reference_id
+                                                            ? 'text-gray-700 cursor-not-allowed'
                                                             : 'text-gray-500 hover:text-red-400 hover:bg-red-400/10'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -469,6 +476,33 @@ export default function FinancePage() {
                         </tbody>
                     </table>
                 </div>
+                {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-900 border-t border-gray-800 gap-4">
+                        <span className="text-sm text-gray-400">
+                            Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedFinances.length)} dari total {processedFinances.length} transaksi
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 text-sm bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                Sebelumnya
+                            </button>
+                            <div className="flex items-center gap-1">
+                                <span className="text-sm text-white px-3 py-1 bg-gray-800 rounded-md font-bold">{currentPage}</span>
+                                <span className="text-sm text-gray-500">/ {totalPages}</span>
+                            </div>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 text-sm bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                Selanjutnya
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Form Input Transaction */}
@@ -477,7 +511,7 @@ export default function FinancePage() {
                     <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-white font-bold text-xl">{editId ? 'Edit Transaction' : 'New Transaction'}</h3>
-                            <button onClick={handleCancel} className="text-gray-500 hover:text-white"><X size={20}/></button>
+                            <button onClick={handleCancel} className="text-gray-500 hover:text-white"><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="grid grid-cols-2 gap-3">
@@ -487,8 +521,8 @@ export default function FinancePage() {
                             <div>
                                 {!isOtherCategory ? (
                                     <div className="relative">
-                                        <select 
-                                            value={CATEGORIES.includes(form.category) ? form.category : (form.category ? "Other" : "")} 
+                                        <select
+                                            value={CATEGORIES.includes(form.category) ? form.category : (form.category ? "Other" : "")}
                                             onChange={(e) => {
                                                 if (e.target.value == 'Other') {
                                                     setIsOtherCategory(true);
@@ -503,23 +537,23 @@ export default function FinancePage() {
                                             }
                                         >
                                             <option value="" disabled>Select Category</option>
-                                            {CATEGORIES.map(cat => ( <option key={cat} value={cat} className="text-white bg-gray-900">{cat}</option> ))}
+                                            {CATEGORIES.map(cat => (<option key={cat} value={cat} className="text-white bg-gray-900">{cat}</option>))}
                                             <option value="Other">Other</option>
                                         </select>
                                         <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                                     </div>
                                 ) : (
                                     <div className="flex gap-2 w-full items-center">
-                                        <input 
-                                            type="text" 
-                                            value={form.category} 
-                                            onChange={(e) => setForm({ ...form, category: e.target.value })} 
-                                            placeholder="Enter new category" 
+                                        <input
+                                            type="text"
+                                            value={form.category}
+                                            onChange={(e) => setForm({ ...form, category: e.target.value })}
+                                            placeholder="Enter new category"
                                             className="grow min-w-0 bg-gray-800 border-none rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500"
                                             autoFocus
                                             required
                                         />
-                                        <button 
+                                        <button
                                             type="button"
                                             onClick={() => {
                                                 setIsOtherCategory(false);
@@ -542,7 +576,7 @@ export default function FinancePage() {
                                 </button>
                                 {isFormDatePickerOpen && (
                                     <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                        <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: toLocalISO(date) }); setIsFormDatePickerOpen(false); }}} />
+                                        <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: toLocalISO(date) }); setIsFormDatePickerOpen(false); } }} />
                                     </div>
                                 )}
                             </div>
