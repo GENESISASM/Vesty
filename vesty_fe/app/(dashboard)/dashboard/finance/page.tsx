@@ -7,7 +7,7 @@ import {
     Search, Pencil, Trash2,
     Plus, CalendarDays, X,
     ChevronsUpDown, ChevronUp, ChevronDown,
-    Filter, ChevronRight, Check, RefreshCw, 
+    Filter, ChevronRight, Check, RefreshCw,
     ChevronLeft
 } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
@@ -49,7 +49,7 @@ export default function FinancePage() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
     const [isMultiFilterOpen, setIsMultiFilterOpen] = useState(false);
-    const [activeSubmenu, setActiveSubmenu] = useState<'type' | 'category' | null>(null);
+    const [activeSubmenu, setActiveSubmenu] = useState<'type' | 'category' | 'rows' | null>(null);
     const [activeFilters, setActiveFilters] = useState<{ types: string[], categories: string[] }>({
         types: [],
         categories: []
@@ -57,8 +57,8 @@ export default function FinancePage() {
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
     const [isOtherCategory, setIsOtherCategory] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
 
-    const itemsPerPage = 100;
     const formDateRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
@@ -318,8 +318,8 @@ export default function FinancePage() {
                             setActiveSubmenu(null);
                         }}
                         className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${isMultiFilterOpen || totalActiveFilters > 0
-                                ? 'bg-gray-800 border-blue-500 text-white'
-                                : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                            ? 'bg-gray-800 border-blue-500 text-white'
+                            : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
                             }`}
                     >
                         <Filter size={18} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
@@ -377,6 +377,47 @@ export default function FinancePage() {
                                 `}>
                                     {CATEGORIES.map(c => (
                                         <CustomCheckbox key={c} checked={activeFilters.categories.includes(c)} onChange={() => toggleFilter('categories', c)} label={c} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Rows Per Page Filter */}
+                            <div className="relative group border-t border-gray-800/50">
+                                <div
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'rows' ? null : 'rows');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Rows per page</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'rows' ? 'rotate-90' : ''}`} />
+                                </div>
+
+                                <div className={`
+                                    bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
+                                    ${activeSubmenu == 'rows' ? 'block' : 'hidden md:group-hover:block'}
+                                `}>
+                                    {[10, 25, 50, 100].map(val => (
+                                        <div
+                                            key={val}
+                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setItemsPerPage(val);
+                                                setCurrentPage(1);
+                                                if (window.innerWidth < 768) setActiveSubmenu(null);
+                                            }}
+                                        >
+                                            <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center transition-all ${itemsPerPage == val ? 'border-blue-600 bg-blue-600/20' : 'border-gray-600 group-hover:border-gray-400'
+                                                }`}>
+                                                {itemsPerPage == val && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
+                                            </div>
+                                            <span className={`text-sm transition-colors ${itemsPerPage == val ? 'text-white font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                {val} Rows
+                                            </span>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -464,8 +505,8 @@ export default function FinancePage() {
                                                     disabled={!!f.reference_id}
                                                     title={f.reference_id ? "Auto-generated from Debt (Cannot edit)" : "Edit"}
                                                     className={`p-2 rounded-lg transition ${f.reference_id
-                                                            ? 'text-gray-700 cursor-not-allowed'
-                                                            : 'text-gray-500 hover:text-blue-400 hover:bg-blue-400/10'
+                                                        ? 'text-gray-700 cursor-not-allowed'
+                                                        : 'text-gray-500 hover:text-blue-400 hover:bg-blue-400/10'
                                                         }`}
                                                 >
                                                     <Pencil size={16} />
@@ -475,8 +516,8 @@ export default function FinancePage() {
                                                     disabled={!!f.reference_id}
                                                     title={f.reference_id ? "Auto-generated from Debt (Cannot delete)" : "Delete"}
                                                     className={`p-2 rounded-lg transition ${f.reference_id
-                                                            ? 'text-gray-700 cursor-not-allowed'
-                                                            : 'text-gray-500 hover:text-red-400 hover:bg-red-400/10'
+                                                        ? 'text-gray-700 cursor-not-allowed'
+                                                        : 'text-gray-500 hover:text-red-400 hover:bg-red-400/10'
                                                         }`}
                                                 >
                                                     <Trash2 size={16} />
@@ -498,7 +539,7 @@ export default function FinancePage() {
                 {totalPages > 1 && (
                     <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-900 border-t border-gray-800 gap-4">
                         <span className="text-sm text-gray-400">
-                            displays {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedFinances.length)} From {processedFinances.length}
+                            Displays {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedFinances.length)} From {processedFinances.length}
                         </span>
                         <div className="flex items-center gap-1">
                             <button
@@ -517,11 +558,10 @@ export default function FinancePage() {
                                         <button
                                             key={index}
                                             onClick={() => setCurrentPage(page as number)}
-                                            className={`min-w-9.5 h-9.5 flex items-center justify-center rounded-xl text-[15px] font-bold transition-all ${
-                                                currentPage == page 
+                                            className={`min-w-9.5 h-9.5 flex items-center justify-center rounded-xl text-[15px] font-bold transition-all ${currentPage == page
                                                     ? 'bg-gray-800 border border-gray-700 text-white shadow-sm'
                                                     : 'text-blue-500 hover:bg-gray-800/40 hover:text-blue-400 bg-transparent'
-                                            }`}
+                                                }`}
                                         >
                                             {page}
                                         </button>
