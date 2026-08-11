@@ -57,7 +57,7 @@ export default function FinancePage() {
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
     const [isOtherCategory, setIsOtherCategory] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(100);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
     const formDateRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -173,7 +173,7 @@ export default function FinancePage() {
     const paginatedFinances = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return processedFinances.slice(startIndex, startIndex + itemsPerPage);
-    }, [processedFinances, currentPage]);
+    }, [processedFinances, currentPage, itemsPerPage]);
 
     const getPageNumbers = () => {
         const pages = [];
