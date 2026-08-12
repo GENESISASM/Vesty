@@ -9,6 +9,7 @@ import {
     Filter, ChevronRight, Check, Wallet, CalendarDays,
     Package, CreditCard, RefreshCw, CheckCircle2,
     AlertCircle, CircleDashed, Plus as PlusIcon,
+    ChevronLeft
 } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -17,7 +18,7 @@ const STATUS_OPTIONS = ['unpaid', 'partial', 'paid'];
 const TYPE_OPTIONS = ['money', 'item'];
 const STOCK_CATEGORIES = [
     'Accessories', 'Apparel', 'Groceries',
-    'Hardware & Tools', 'Health & Beauty', 
+    'Hardware & Tools', 'Health & Beauty',
     'Homecare', 'Snacks & Beverages', 'Stationery', 'Tobacco'
 ];
 const STOCK_UNIT = [
@@ -38,7 +39,7 @@ const defaultDebtForm = {
     date: new Date().toISOString().split('T')[0],
     due_date: '',
     amount: '',
-    items: [{ 
+    items: [{
         item_name: '',
         quantity: '',
         unit: '',
@@ -95,6 +96,8 @@ export default function DebtPage() {
     const [isDueDateOpen, setIsDueDateOpen] = useState(false);
     const [isPaymentDateOpen, setIsPaymentDateOpen] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
@@ -250,6 +253,32 @@ export default function DebtPage() {
         return result;
     }, [debts, searchQuery, sortConfig, activeFilters, dateRange]);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, dateRange, sortConfig, activeFilters]);
+
+    const totalPages = Math.ceil(processedDebts.length / itemsPerPage);
+    const paginatedCredits = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return processedDebts.slice(startIndex, startIndex + itemsPerPage);
+    }, [processedDebts, currentPage, itemsPerPage]);
+
+    const getPageNumbers = () => {
+        const pages = [];
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            if (currentPage <= 3) {
+                pages.push(1, 2, 3, 4, '...', totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+            } else {
+                pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+            }
+        }
+        return pages;
+    };
+
     const handleEdit = (debt: Debt) => {
         setForm({
             debtor_name: debt.debtor_name,
@@ -266,7 +295,7 @@ export default function DebtPage() {
                     isOtherUnit: item.unit ? !STOCK_UNIT.includes(item.unit) : false,
                     price_per_unit: item.price_per_unit ? String(item.price_per_unit) : '',
                     total_price: item.total_price ? String(item.total_price) : '',
-                    category: item.category || '', 
+                    category: item.category || '',
                     isOtherCategory: item.category ? !STOCK_CATEGORIES.includes(item.category) : false
                 }))
                 : [defaultDebtForm.items[0]]
@@ -312,11 +341,11 @@ export default function DebtPage() {
             setEditId(null);
             fetchData();
         } catch (err: any) {
-            const errorMessage = err.response?.data?.message 
-                || err.response?.data?.error 
-                || err.message 
+            const errorMessage = err.response?.data?.message
+                || err.response?.data?.error
+                || err.message
                 || 'Gagal menyimpan hutang. Cek kembali input Anda.';
-            
+
             setFormError(errorMessage);
         } finally {
             setIsSubmitting(false);
@@ -398,8 +427,8 @@ export default function DebtPage() {
     const totalActiveFilters = activeFilters.statuses.length + activeFilters.types.length + activeFilters.names.length;
 
     const CustomCheckbox = ({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) => (
-        <div 
-            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group" 
+        <div
+            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group"
             onClick={(e) => {
                 e.stopPropagation();
                 onChange();
@@ -444,7 +473,7 @@ export default function DebtPage() {
                 {/* Search */}
                 <div className="relative grow min-w-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                    <input 
+                    <input
                         type="text"
                         placeholder="Search"
                         className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500 transition"
@@ -457,9 +486,8 @@ export default function DebtPage() {
                 <div className="relative shrink-0" ref={dropdownRef}>
                     <button
                         onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
-                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
-                            isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                        }`}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                            }`}
                     >
                         <CalendarDays size={18} className="text-gray-400" />
                         <span className="hidden md:inline">{dateRange?.from && dateRange?.to ? `${formatDate(dateRange.from)} – ${formatDate(dateRange.to)}` : 'Date'}</span>
@@ -493,11 +521,10 @@ export default function DebtPage() {
                             setIsMultiFilterOpen(!isMultiFilterOpen);
                             setActiveSubmenu(null);
                         }}
-                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${
-                            isMultiFilterOpen || totalActiveFilters > 0
-                            ? 'bg-gray-800 border-blue-500 text-white' 
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${isMultiFilterOpen || totalActiveFilters > 0
+                            ? 'bg-gray-800 border-blue-500 text-white'
                             : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                        }`}
+                            }`}
                     >
                         <Filter size={18} className={totalActiveFilters > 0 ? 'text-blue-400' : 'text-gray-500'} />
                         <span className="hidden md:inline">Filters</span>
@@ -510,7 +537,7 @@ export default function DebtPage() {
                         <div className="absolute right-0 mt-2 w-52 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-60 py-2 overflow-visible ring-1 ring-black/50 animate-in fade-in zoom-in-95 duration-100">
                             {/* Name Filter */}
                             <div className="relative group border-t border-gray-800/50 md:border-t-0">
-                                <div 
+                                <div
                                     className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
                                     onClick={() => {
                                         if (window.innerWidth < 768) {
@@ -535,7 +562,7 @@ export default function DebtPage() {
 
                             {/* Type Filter */}
                             <div className="relative group border-t border-gray-800/50 md:border-t-0">
-                                <div 
+                                <div
                                     className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
                                     onClick={() => {
                                         if (window.innerWidth < 768) {
@@ -558,7 +585,7 @@ export default function DebtPage() {
 
                             {/* Status Filter */}
                             <div className="relative group">
-                                <div 
+                                <div
                                     className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
                                     onClick={() => {
                                         if (window.innerWidth < 768) {
@@ -581,11 +608,11 @@ export default function DebtPage() {
 
                             {totalActiveFilters > 0 && (
                                 <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
-                                    <button 
+                                    <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setActiveFilters({ statuses: [], types: [], names: [] });
-                                        }} 
+                                        }}
                                         className="w-full text-center py-2 text-xs font-semibold text-red-400 hover:text-red-300"
                                     >
                                         Clear All
@@ -605,7 +632,7 @@ export default function DebtPage() {
                 </button>
 
                 {/* Add Debt Record */}
-                <button onClick={() => setShowForm(true)} 
+                <button onClick={() => setShowForm(true)}
                     className="shrink-0 flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-blue-900/20"
                 >
                     <Plus size={18} /> <span className="hidden md:inline">Add Debt</span>
@@ -640,13 +667,13 @@ export default function DebtPage() {
                         </thead>
                         <tbody className="divide-y divide-gray-800 text-center">
                             {isLoading ? (
-                                [1,2,3].map(i => (
+                                [1, 2, 3].map(i => (
                                     <tr key={i} className="animate-pulse">
                                         <td colSpan={8} className="px-6 py-4"><div className="h-12 bg-gray-800/50 rounded-lg" /></td>
                                     </tr>
                                 ))
-                            ) : processedDebts.length > 0 ? (
-                                processedDebts.map((debt) => {
+                            ) : paginatedCredits.length > 0 ? (
+                                paginatedCredits.map((debt) => {
                                     const status = statusConfig[debt.status];
                                     const StatusIcon = status.icon;
                                     const amount = getDebtAmount(debt);
@@ -716,6 +743,51 @@ export default function DebtPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Button Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-900 border-t border-gray-800 gap-4">
+                        <span className="text-sm text-gray-400">
+                            Displays {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedFinances.length)} From {processedFinances.length}
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage == 1}
+                                className="flex items-center gap-1 px-2 py-2 text-[15px] font-semibold text-blue-500 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition bg-transparent"
+                            >
+                                <ChevronLeft size={18} strokeWidth={2.5} /> Previous
+                            </button>
+
+                            <div className="flex items-center gap-1 mx-2">
+                                {getPageNumbers().map((page, index) => (
+                                    page == '...' ? (
+                                        <span key={`ellipsis-${index}`} className="px-2 py-2 text-white font-bold tracking-widest">...</span>
+                                    ) : (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentPage(page as number)}
+                                            className={`min-w-9.5 h-9.5 flex items-center justify-center rounded-xl text-[15px] font-bold transition-all ${currentPage == page
+                                                ? 'bg-gray-800 border border-gray-700 text-white shadow-sm'
+                                                : 'text-blue-500 hover:bg-gray-800/40 hover:text-blue-400 bg-transparent'
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    )
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage == totalPages}
+                                className="flex items-center gap-1 px-2 py-2 text-[15px] font-semibold text-blue-500 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition bg-transparent"
+                            >
+                                Next <ChevronRight size={18} strokeWidth={2.5} />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Add Debt Modal */}
@@ -848,7 +920,7 @@ export default function DebtPage() {
                                                     className="w-full bg-gray-800 border-none rounded-xl px-4 py-2.5 text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-blue-500"
                                                     required
                                                 />
-                                                
+
                                                 {/* Mulai logika dropdown Unit */}
                                                 {!item.isOtherUnit ? (
                                                     <div className="relative">
@@ -941,7 +1013,7 @@ export default function DebtPage() {
                                     </button>
                                     {isDateOpen && (
                                         <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                            <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: toLocalISO(date) }); setIsDateOpen(false); }}} />
+                                            <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: toLocalISO(date) }); setIsDateOpen(false); } }} />
                                         </div>
                                     )}
                                 </div>
@@ -1095,7 +1167,7 @@ export default function DebtPage() {
                                 </button>
                                 {isPaymentDateOpen && (
                                     <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                        <DayPicker mode="single" selected={new Date(paymentForm.date)} onSelect={(date) => { if (date) { setPaymentForm({ ...paymentForm, date: toLocalISO(date) }); setIsPaymentDateOpen(false); }}} />
+                                        <DayPicker mode="single" selected={new Date(paymentForm.date)} onSelect={(date) => { if (date) { setPaymentForm({ ...paymentForm, date: toLocalISO(date) }); setIsPaymentDateOpen(false); } }} />
                                     </div>
                                 )}
                             </div>
@@ -1114,7 +1186,7 @@ export default function DebtPage() {
                         <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"><Trash2 size={30} /></div>
                         <h3 className="text-white font-bold text-lg mb-2">Delete Debt?</h3>
                         <p className="text-gray-500 text-sm mb-8">
-                            All payment history will be deleted. <br/>
+                            All payment history will be deleted. <br />
                             <span className="text-blue-400 font-medium">Any reduced stock and finance income will be automatically restored.</span>
                         </p>
                         <div className="grid grid-cols-2 gap-3">
