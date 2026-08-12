@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -17,26 +17,27 @@ model User {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  finances   Finance[]
-  stocks     Stock[]
-  debts      Debt[]
+  finances Finance[]
+  stocks   Stock[]
+  debts    Debt[]
+  credits  Credit[]
 
   @@map("users")
 }
 
 model Finance {
-  id          String   @id @default(uuid())
-  user_id     String
-  type        String   // "income" | "expense"
-  amount      Decimal  @db.Decimal(15, 2)
-  category    String
-  description String?
-  date        DateTime
+  id           String   @id @default(uuid())
+  user_id      String
+  type         String // "income" | "expense"
+  amount       Decimal  @db.Decimal(15, 2)
+  category     String
+  description  String?
+  date         DateTime
   reference_id String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
-  user        User     @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [user_id], references: [id])
 
   @@map("finances")
 }
@@ -47,47 +48,47 @@ model Stock {
   item_name     String
   category      String?
   current_stock Int      @default(0)
-  unit          String   // pcs, kg, liter, etc
+  unit          String // pcs, kg, liter, etc
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  user          User           @relation(fields: [user_id], references: [id])
-  history       StockHistory[]
+  user    User           @relation(fields: [user_id], references: [id])
+  history StockHistory[]
 
   @@map("stocks")
 }
 
 model StockHistory {
-  id          String   @id @default(uuid())
-  stock_id    String
-  type        String   // "in" | "out"
-  quantity    Int
-  notes       String?
-  date        DateTime
+  id           String   @id @default(uuid())
+  stock_id     String
+  type         String // "in" | "out"
+  quantity     Int
+  notes        String?
+  date         DateTime
   reference_id String?
-  created_at  DateTime @default(now())
+  created_at   DateTime @default(now())
 
-  stock       Stock    @relation(fields: [stock_id], references: [id])
+  stock Stock @relation(fields: [stock_id], references: [id])
 
   @@map("stock_histories")
 }
 
 // DEBT
 model Debt {
-  id           String        @id @default(uuid())
-  user_id      String
-  debtor_name  String
-  type         String        // 'money' | 'item'
-  status       String        @default("unpaid") // 'unpaid' | 'partial' | 'paid'
-  notes        String?
-  date         DateTime
-  due_date     DateTime?
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
+  id          String    @id @default(uuid())
+  user_id     String
+  debtor_name String
+  type        String // 'money' | 'item'
+  status      String    @default("unpaid") // 'unpaid' | 'partial' | 'paid'
+  notes       String?
+  date        DateTime
+  due_date    DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
 
-  user         User          @relation(fields: [user_id], references: [id])
-  debt_items   DebtItem[]
-  debt_money   DebtMoney?
+  user          User          @relation(fields: [user_id], references: [id])
+  debt_items    DebtItem[]
+  debt_money    DebtMoney?
   debt_payments DebtPayment[]
 
   @@map("debts")
@@ -104,7 +105,7 @@ model DebtItem {
   total_price    Decimal? @db.Decimal(15, 2)
   created_at     DateTime @default(now())
 
-  debt           Debt     @relation(fields: [debt_id], references: [id], onDelete: Cascade)
+  debt Debt @relation(fields: [debt_id], references: [id], onDelete: Cascade)
 
   @@map("debt_items")
 }
@@ -116,7 +117,7 @@ model DebtMoney {
   amount     Decimal  @db.Decimal(15, 2)
   created_at DateTime @default(now())
 
-  debt       Debt     @relation(fields: [debt_id], references: [id], onDelete: Cascade)
+  debt Debt @relation(fields: [debt_id], references: [id], onDelete: Cascade)
 
   @@map("debt_money")
 }
@@ -126,12 +127,45 @@ model DebtPayment {
   id           String   @id @default(uuid())
   debt_id      String
   amount       Decimal  @db.Decimal(15, 2)
-  payment_type String   // 'money' | 'item'
+  payment_type String // 'money' | 'item'
   notes        String?
   date         DateTime
   created_at   DateTime @default(now())
 
-  debt         Debt     @relation(fields: [debt_id], references: [id], onDelete: Cascade)
+  debt Debt @relation(fields: [debt_id], references: [id], onDelete: Cascade)
 
   @@map("debt_payments")
+}
+
+// CREDIT (HUTANG/CICILAN)
+model Credit {
+  id            String    @id @default(uuid())
+  user_id       String
+  creditor_name String // Nama Bank/Teman tempat Anda berhutang
+  status        String    @default("unpaid") // 'unpaid' | 'partial' | 'paid'
+  notes         String?
+  date          DateTime
+  due_date      DateTime?
+  amount        Decimal   @db.Decimal(15, 2)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  user            User            @relation(fields: [user_id], references: [id])
+  credit_payments CreditPayment[]
+
+  @@map("credits")
+}
+
+// CREDIT PAYMENT (PEMBAYARAN CICILAN)
+model CreditPayment {
+  id         String   @id @default(uuid())
+  credit_id  String
+  amount     Decimal  @db.Decimal(15, 2)
+  notes      String?
+  date       DateTime
+  created_at DateTime @default(now())
+
+  credit Credit @relation(fields: [credit_id], references: [id], onDelete: Cascade)
+
+  @@map("credit_payments")
 }
