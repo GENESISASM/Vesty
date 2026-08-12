@@ -204,8 +204,7 @@ export default function DebtPage() {
     const processedDebts = useMemo(() => {
         let result = debts.filter(d => {
             const query = searchQuery.toLowerCase();
-            const matchesSearch = [d.debtor_name, d.notes, d.type, d.status]
-                .some(f => f?.toLowerCase().includes(query));
+            const matchesSearch = [d.debtor_name, d.notes, d.type, d.status].some(f => f?.toLowerCase().includes(query));
             const matchesStatus = activeFilters.statuses.length == 0 || activeFilters.statuses.includes(d.status);
             const matchesType = activeFilters.types.length == 0 || activeFilters.types.includes(d.type);
             const matchesName = activeFilters.names.length == 0 || activeFilters.names.includes(d.debtor_name);

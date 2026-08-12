@@ -106,3 +106,26 @@ export interface DebtSummary {
   totalPartial: number;
   totalPaid: number;
 }
+
+export interface CreditPayment {
+  id: string;
+  credit_id: string;
+  amount: number;
+  notes?: string;
+  date: string;
+  created_at: string;
+}
+
+export interface Credit {
+  id: string;
+  user_id: string;
+  creditor_name: string;
+  status: 'unpaid' | 'partial' | 'paid';
+  notes?: string;
+  date: string;
+  due_date?: string;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+  credit_payments: CreditPayment[];
+}

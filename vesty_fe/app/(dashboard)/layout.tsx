@@ -7,7 +7,8 @@ import {
     LayoutDashboard, Wallet,
     Package, LogOut,
     Menu, Languages,
-    User, Check, Receipt
+    User, Check, Receipt,
+    CreditCard
 } from 'lucide-react';
 import Image from "next/image";
 import Link from "next/link";
@@ -39,7 +40,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/dashboard/finance', label: 'Finance', icon: Wallet },
         { href: '/dashboard/stock', label: 'Stock', icon: Package },
-        { href: '/dashboard/debt', label: 'Debt', icon: Receipt }
+        { href: '/dashboard/debt', label: 'Debit', icon: Receipt },
+        { href: '/dashboard/credit', label: 'Credit', icon: CreditCard },
     ];
 
     const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
