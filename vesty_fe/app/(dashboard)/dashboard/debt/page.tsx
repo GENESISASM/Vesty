@@ -748,7 +748,7 @@ export default function DebtPage() {
                 {totalPages > 1 && (
                     <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-900 border-t border-gray-800 gap-4">
                         <span className="text-sm text-gray-400">
-                            Displays {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedFinances.length)} From {processedFinances.length}
+                            Displays {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedDebts.length)} From {processedDebts.length}
                         </span>
                         <div className="flex items-center gap-1">
                             <button
