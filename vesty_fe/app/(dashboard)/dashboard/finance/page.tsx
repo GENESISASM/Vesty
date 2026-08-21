@@ -13,7 +13,6 @@ import {
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
-const CATEGORIES = ['Amil Zakat', 'Bills', 'Commission', 'Entertainment', 'Food', 'Health & Beauty', 'Liability', 'Maintenance', 'Salary', 'Shopping', 'Transport'];
 const TYPES = ['income', 'expense'];
 
 const defaultForm = {
@@ -62,6 +61,11 @@ export default function FinancePage() {
     const formDateRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
+
+    const dynamicCategories = useMemo(() => {
+        const categoriesFromDB = finances.map(f => f.category).filter(Boolean);
+        return Array.from(new Set(categoriesFromDB)).sort();
+    }, [finances]);
 
     const fetchFinances = useCallback(async () => {
         setIsLoading(true);
@@ -221,7 +225,7 @@ export default function FinancePage() {
     };
 
     const handleEdit = (finance: Finance) => {
-        const isPredefined = CATEGORIES.includes(finance.category ?? '');
+        const isPredefined = dynamicCategories.includes(finance.category ?? '');
         setForm({
             type: finance.type,
             amount: String(finance.amount),
@@ -375,9 +379,13 @@ export default function FinancePage() {
                                     bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-52 py-1 max-h-60 overflow-y-auto custom-scrollbar
                                     ${activeSubmenu == 'category' ? 'block' : 'hidden md:group-hover:block'}
                                 `}>
-                                    {CATEGORIES.map(c => (
-                                        <CustomCheckbox key={c} checked={activeFilters.categories.includes(c)} onChange={() => toggleFilter('categories', c)} label={c} />
-                                    ))}
+                                    {dynamicCategories.length > 0 ? (
+                                        dynamicCategories.map(c => (
+                                            <CustomCheckbox key={c} checked={activeFilters.categories.includes(c)} onChange={() => toggleFilter('categories', c)} label={c} />
+                                        ))
+                                    ) : (
+                                        <p className="px-4 py-2 text-xs text-gray-500 italic">No categories yet</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -559,8 +567,8 @@ export default function FinancePage() {
                                             key={index}
                                             onClick={() => setCurrentPage(page as number)}
                                             className={`min-w-9.5 h-9.5 flex items-center justify-center rounded-xl text-[15px] font-bold transition-all ${currentPage == page
-                                                    ? 'bg-gray-800 border border-gray-700 text-white shadow-sm'
-                                                    : 'text-blue-500 hover:bg-gray-800/40 hover:text-blue-400 bg-transparent'
+                                                ? 'bg-gray-800 border border-gray-700 text-white shadow-sm'
+                                                : 'text-blue-500 hover:bg-gray-800/40 hover:text-blue-400 bg-transparent'
                                                 }`}
                                         >
                                             {page}
@@ -598,7 +606,7 @@ export default function FinancePage() {
                                 {!isOtherCategory ? (
                                     <div className="relative">
                                         <select
-                                            value={CATEGORIES.includes(form.category) ? form.category : (form.category ? "Other" : "")}
+                                            value={dynamicCategories.includes(form.category) ? form.category : (form.category ? "Other" : "")}
                                             onChange={(e) => {
                                                 if (e.target.value == 'Other') {
                                                     setIsOtherCategory(true);
@@ -613,7 +621,7 @@ export default function FinancePage() {
                                             }
                                         >
                                             <option value="" disabled>Select Category</option>
-                                            {CATEGORIES.map(cat => (<option key={cat} value={cat} className="text-white bg-gray-900">{cat}</option>))}
+                                            {dynamicCategories.map(cat => (<option key={cat} value={cat} className="text-white bg-gray-900">{cat}</option>))}
                                             <option value="Other">Other</option>
                                         </select>
                                         <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />

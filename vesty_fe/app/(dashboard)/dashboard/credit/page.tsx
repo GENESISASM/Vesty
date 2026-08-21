@@ -62,7 +62,7 @@ export default function CreditPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
     const [isMultiFilterOpen, setIsMultiFilterOpen] = useState(false);
-    const [activeSubmenu, setActiveSubmenu] = useState<'status' | 'name' | null>(null);
+    const [activeSubmenu, setActiveSubmenu] = useState<'status' | 'name' | 'rows' | null>(null);
     const [activeFilters, setActiveFilters] = useState<{ statuses: string[]; names: string[] }>({
         statuses: [],
         names: [],
@@ -83,7 +83,7 @@ export default function CreditPage() {
     const [isPaymentDateOpen, setIsPaymentDateOpen] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
@@ -467,6 +467,46 @@ export default function CreditPage() {
                                 <div className={`bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1 ${activeSubmenu == 'status' ? 'block' : 'hidden md:group-hover:block'}`}>
                                     {STATUS_OPTIONS.map(s => (
                                         <CustomCheckbox key={s} checked={activeFilters.statuses.includes(s)} onChange={() => toggleFilter('statuses', s)} label={s} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Rows Per Page Filter */}
+                            <div className="relative group border-t border-gray-800/50">
+                                <div
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'rows' ? null : 'rows');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Rows per page</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'rows' ? 'rotate-90' : ''}`} />
+                                </div>
+
+                                <div className={`bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
+                                        ${activeSubmenu == 'rows' ? 'block' : 'hidden md:group-hover:block'}
+                                    `}>
+                                    {[10, 25, 50, 100].map(val => (
+                                        <div
+                                            key={val}
+                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setItemsPerPage(val);
+                                                setCurrentPage(1);
+                                                if (window.innerWidth < 768) setActiveSubmenu(null);
+                                            }}
+                                        >
+                                            <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center transition-all ${itemsPerPage == val ? 'border-blue-600 bg-blue-600/20' : 'border-gray-600 group-hover:border-gray-400'
+                                                }`}>
+                                                {itemsPerPage == val && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
+                                            </div>
+                                            <span className={`text-sm transition-colors ${itemsPerPage == val ? 'text-white font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                {val} Rows
+                                            </span>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
