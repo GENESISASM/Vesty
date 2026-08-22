@@ -8,7 +8,8 @@ import {
     ChevronsUpDown, ChevronUp, ChevronDown,
     Filter, ChevronRight, Check, CalendarDays,
     CreditCard, RefreshCw, CheckCircle2,
-    AlertCircle, CircleDashed, ChevronLeft
+    AlertCircle, CircleDashed, ChevronLeft,
+    CirclePlus
 } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -618,7 +619,7 @@ export default function CreditPage() {
                                                     </button>
                                                     {credit.status != 'paid' && (
                                                         <button onClick={() => { setPaymentModal(credit); setFormError(null); }} className="p-2 text-gray-500 hover:text-green-400 hover:bg-green-400/10 rounded-lg transition" title="Add Payment">
-                                                            <CheckCircle2 size={16} />
+                                                            <CirclePlus size={16} />
                                                         </button>
                                                     )}
                                                     <button onClick={() => setDeleteId(credit.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition">
