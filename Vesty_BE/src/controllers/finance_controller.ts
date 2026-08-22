@@ -18,7 +18,11 @@ export class FinanceController {
   static async getAllFinances(req: AuthRequest, res: Response) {
     try {
       const userId = req.user!.id;
-      const result = await FinanceService.getService().getAllFinances(userId);
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const result = await FinanceService.getService().getAllFinances(userId, page, limit);
+
       return res.status(200).json(responseBuilder(true, '200', result));
     } catch (err: any) {
       return res.status(400).json(responseBuilder(false, err.code ?? '400', null, err.message));
@@ -63,6 +67,17 @@ export class FinanceController {
     try {
       const userId = req.user!.id;
       const result = await FinanceService.getService().getFinanceSummary(userId);
+      return res.status(200).json(responseBuilder(true, '200', result));
+    } catch (err: any) {
+      return res.status(400).json(responseBuilder(false, err.code ?? '400', null, err.message));
+    }
+  }
+
+  static async getForDashboard(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const result = await FinanceService.getService().getAllForDashboard(userId);
+      
       return res.status(200).json(responseBuilder(true, '200', result));
     } catch (err: any) {
       return res.status(400).json(responseBuilder(false, err.code ?? '400', null, err.message));

@@ -16,8 +16,8 @@ import { RefreshCw, CalendarDays } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
-const INCOME_COLORS  = [ '#10b981', '#0ea5e9', '#6366f1', '#8b5cf6', '#06b6d4' ];
-const EXPENSE_COLORS = [ '#dc2f02', '#e85d04', '#f48c06', '#faa307', '#ffba08' ];
+const INCOME_COLORS = ['#10b981', '#0ea5e9', '#6366f1', '#8b5cf6', '#06b6d4'];
+const EXPENSE_COLORS = ['#dc2f02', '#e85d04', '#f48c06', '#faa307', '#ffba08'];
 
 const renderPieShape = (props: any) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, isActive } = props;
@@ -33,6 +33,7 @@ const renderPieShape = (props: any) => {
 export default function DashboardPage() {
     const { user } = useAuth();
     const [finances, setFinances] = useState<Finance[]>([]);
+    const [lifetimeSummary, setLifetimeSummary] = useState({ totalIncome: 0, totalExpense: 0, balance: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [tempRange, setTempRange] = useState<DateRange | undefined>(undefined);
@@ -45,8 +46,17 @@ export default function DashboardPage() {
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const financesRes = await axiosInstance.get('/finance/list');
-            setFinances(financesRes.data.data);
+            const [chartRes, summaryRes] = await Promise.all([
+                axiosInstance.get('/finance/dashboardData'),
+                axiosInstance.get('/finance/summary')
+            ]);
+
+            setFinances(chartRes.data.data);
+            setLifetimeSummary({
+                totalIncome: summaryRes.data.data.totalIncome || 0,
+                totalExpense: summaryRes.data.data.totalExpense || 0,
+                balance: summaryRes.data.data.balance || 0
+            });
             setRefreshKey(prev => prev + 1);
         } catch (err) {
             console.error(err);
@@ -81,7 +91,7 @@ export default function DashboardPage() {
 
     const getFilteredFinances = useCallback((): Finance[] => {
         if (!finances.length) return [];
-        
+
         let start: Date;
         let end: Date;
         if (!dateRange?.from || !dateRange?.to) {
@@ -104,12 +114,6 @@ export default function DashboardPage() {
 
     const filteredFinances = getFilteredFinances();
 
-    const currentSummary = {
-        totalIncome: finances.filter(f => f.type == 'income').reduce((sum, f) => sum + Number(f.amount), 0),
-        totalExpense: finances.filter(f => f.type == 'expense').reduce((sum, f) => sum + Number(f.amount), 0),
-        get balance() { return this.totalIncome - this.totalExpense; }
-    };
-
     const getChartData = () => {
         if (!filteredFinances.length) return [];
 
@@ -119,7 +123,7 @@ export default function DashboardPage() {
         if (dateRange?.from && dateRange?.to) {
             isDailyGrouping = (endTime - startTime) <= 31 * 24 * 60 * 60 * 1000;
         } else {
-            isDailyGrouping = false; 
+            isDailyGrouping = false;
         }
 
         if (isDailyGrouping) {
@@ -181,11 +185,10 @@ export default function DashboardPage() {
                                 setTempRange(dateRange);
                                 setIsFilterOpen(!isFilterOpen);
                             }}
-                            className={`flex items-center gap-2 px-4 py-2 border text-sm font-medium rounded-lg transition ${
-                                isFilterOpen
-                                    ? 'bg-gray-800 border-blue-500 text-white'
-                                    : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 border text-sm font-medium rounded-lg transition ${isFilterOpen
+                                ? 'bg-gray-800 border-blue-500 text-white'
+                                : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
+                                }`}
                         >
                             <CalendarDays size={16} className="text-blue-400 shrink-0" />
                             <span className="hidden md:inline">
@@ -265,17 +268,17 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                         <p className="font-quicksand text-gray-400 text-sm mb-1 uppercase tracking-wide">Balance</p>
-                        <p className={`text-2xl font-bold ${currentSummary.balance >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                            {formatCurrency(currentSummary.balance)}
+                        <p className={`text-2xl font-bold ${lifetimeSummary.balance >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                            {formatCurrency(lifetimeSummary.balance)}
                         </p>
                     </div>
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                         <p className="font-quicksand text-gray-400 text-sm mb-1 uppercase tracking-wide">Income</p>
-                        <p className="text-green-400 text-2xl font-bold">{formatCurrency(currentSummary.totalIncome)}</p>
+                        <p className="text-green-400 text-2xl font-bold">{formatCurrency(lifetimeSummary.totalIncome)}</p>
                     </div>
                     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                         <p className="font-quicksand text-gray-400 text-sm mb-1 uppercase tracking-wide">Expense</p>
-                        <p className="text-red-400 text-2xl font-bold">{formatCurrency(currentSummary.totalExpense)}</p>
+                        <p className="text-red-400 text-2xl font-bold">{formatCurrency(lifetimeSummary.totalExpense)}</p>
                     </div>
                 </div>
             )}
@@ -371,7 +374,7 @@ export default function DashboardPage() {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
                                 <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={{ stroke: '#374151' }} tickLine={false} dy={10} />
-                                <YAxis tickFormatter={(val) => val >= 1000000 ? `${(val/1000000).toFixed(1)}M` : val >= 1000 ? `${(val/1000).toFixed(0)}K` : val.toString()} tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} dx={-10} />
+                                <YAxis tickFormatter={(val) => val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}K` : val.toString()} tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} dx={-10} />
                                 <Tooltip content={({ active, payload, label }) => {
                                     if (active && payload && payload.length) {
                                         return (

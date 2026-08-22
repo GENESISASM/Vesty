@@ -57,6 +57,7 @@ export default function FinancePage() {
     const [isOtherCategory, setIsOtherCategory] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [meta, setMeta] = useState({ total_pages: 1, total_data: 0 });
 
     const formDateRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -70,14 +71,19 @@ export default function FinancePage() {
     const fetchFinances = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await axiosInstance.get('/finance/list');
-            setFinances(res.data.data);
+            const res = await axiosInstance.get(`/finance/list?page=${currentPage}&limit=${itemsPerPage}`);
+
+            setFinances(res.data.data.data);
+            setMeta({
+                total_pages: res.data.data.meta.total_pages,
+                total_data: res.data.data.meta.total_data
+            });
         } catch (err) {
             console.error(err);
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [currentPage, itemsPerPage]);
 
     useEffect(() => { fetchFinances(); }, [fetchFinances]);
 
@@ -173,14 +179,10 @@ export default function FinancePage() {
         setCurrentPage(1);
     }, [searchQuery, dateRange, sortConfig, activeFilters]);
 
-    const totalPages = Math.ceil(processedFinances.length / itemsPerPage);
-    const paginatedFinances = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return processedFinances.slice(startIndex, startIndex + itemsPerPage);
-    }, [processedFinances, currentPage, itemsPerPage]);
-
     const getPageNumbers = () => {
         const pages = [];
+        const totalPages = meta.total_pages;
+
         if (totalPages <= 5) {
             for (let i = 1; i <= totalPages; i++) pages.push(i);
         } else {
@@ -496,8 +498,8 @@ export default function FinancePage() {
                                         <td colSpan={6} className="px-6 py-4"><div className="h-12 bg-gray-800/50 rounded-lg" /></td>
                                     </tr>
                                 ))
-                            ) : paginatedFinances.length > 0 ? (
-                                paginatedFinances.map((f) => (
+                            ) : processedFinances.length > 0 ? (
+                                processedFinances.map((f) => (
                                     <tr key={f.id} className="hover:bg-gray-800/30 transition-colors group">
                                         <td className="px-6 py-4 text-gray-100 text-sm capitalize">{f.type}</td>
                                         <td className="px-6 py-4 text-gray-100 text-sm">{f.category}</td>
@@ -544,10 +546,10 @@ export default function FinancePage() {
                 </div>
 
                 {/* Button Pagination */}
-                {totalPages > 1 && (
+                {meta.total_pages > 1 && (
                     <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-gray-900 border-t border-gray-800 gap-4">
                         <span className="text-sm text-gray-400">
-                            Displays {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, processedFinances.length)} From {processedFinances.length}
+                            Displays {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, meta.total_data)} From {meta.total_data}
                         </span>
                         <div className="flex items-center gap-1">
                             <button
@@ -557,7 +559,6 @@ export default function FinancePage() {
                             >
                                 <ChevronLeft size={18} strokeWidth={2.5} /> Previous
                             </button>
-
                             <div className="flex items-center gap-1 mx-2">
                                 {getPageNumbers().map((page, index) => (
                                     page == '...' ? (
@@ -576,10 +577,9 @@ export default function FinancePage() {
                                     )
                                 ))}
                             </div>
-
                             <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage == totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(meta.total_pages, p + 1))}
+                                disabled={currentPage == meta.total_pages}
                                 className="flex items-center gap-1 px-2 py-2 text-[15px] font-semibold text-blue-500 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition bg-transparent"
                             >
                                 Next <ChevronRight size={18} strokeWidth={2.5} />
