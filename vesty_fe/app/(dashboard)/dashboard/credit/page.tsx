@@ -605,8 +605,8 @@ export default function CreditPage() {
                                                     : <span className="text-green-400 font-medium">✓ Lunas</span>
                                                 }
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <p className="text-white font-medium text-sm">{credit.notes || '-'}</p>
+                                            <td className="px-6 py-4 max-w-37.5">
+                                                <p className="text-white font-medium text-sm truncate" title={credit.notes || ''} >{credit.notes || '-'}</p>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-1">
