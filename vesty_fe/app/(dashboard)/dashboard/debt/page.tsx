@@ -75,7 +75,7 @@ export default function DebtPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: null });
     const [isMultiFilterOpen, setIsMultiFilterOpen] = useState(false);
-    const [activeSubmenu, setActiveSubmenu] = useState<'status' | 'type' | 'name' | null>(null);
+    const [activeSubmenu, setActiveSubmenu] = useState<'status' | 'type' | 'name' | 'rows' | null>(null);
     const [activeFilters, setActiveFilters] = useState<{ statuses: string[]; types: string[]; names: string[] }>({
         statuses: [],
         types: [],
@@ -97,7 +97,7 @@ export default function DebtPage() {
     const [isPaymentDateOpen, setIsPaymentDateOpen] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
@@ -258,7 +258,7 @@ export default function DebtPage() {
     }, [searchQuery, dateRange, sortConfig, activeFilters]);
 
     const totalPages = Math.ceil(processedDebts.length / itemsPerPage);
-    const paginatedCredits = useMemo(() => {
+    const paginatedDebits = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return processedDebts.slice(startIndex, startIndex + itemsPerPage);
     }, [processedDebts, currentPage, itemsPerPage]);
@@ -606,6 +606,46 @@ export default function DebtPage() {
                                 </div>
                             </div>
 
+                            {/* Rows Per Page Filter */}
+                            <div className="relative group border-t border-gray-800/50">
+                                <div
+                                    className="px-4 py-2.5 hover:bg-gray-800/80 cursor-pointer flex items-center justify-between text-sm text-gray-400 hover:text-white transition-all"
+                                    onClick={() => {
+                                        if (window.innerWidth < 768) {
+                                            setActiveSubmenu(activeSubmenu == 'rows' ? null : 'rows');
+                                        }
+                                    }}
+                                >
+                                    <span className="font-medium">Rows per page</span>
+                                    <ChevronRight size={14} className={`opacity-50 transition-transform md:group-hover:rotate-0 ${activeSubmenu == 'rows' ? 'rotate-90' : ''}`} />
+                                </div>
+
+                                <div className={`bg-gray-950/50 md:bg-gray-900 md:border md:border-gray-800 md:rounded-2xl md:shadow-2xl md:absolute md:right-full md:top-0 md:mr-1 md:w-44 py-1
+                                                                    ${activeSubmenu == 'rows' ? 'block' : 'hidden md:group-hover:block'}
+                                                                `}>
+                                    {[10, 25, 50, 100].map(val => (
+                                        <div
+                                            key={val}
+                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-800/50 cursor-pointer transition-colors group"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setItemsPerPage(val);
+                                                setCurrentPage(1);
+                                                if (window.innerWidth < 768) setActiveSubmenu(null);
+                                            }}
+                                        >
+                                            <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center transition-all ${itemsPerPage == val ? 'border-blue-600 bg-blue-600/20' : 'border-gray-600 group-hover:border-gray-400'
+                                                }`}>
+                                                {itemsPerPage == val && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
+                                            </div>
+                                            <span className={`text-sm transition-colors ${itemsPerPage == val ? 'text-white font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                {val} Rows
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             {totalActiveFilters > 0 && (
                                 <div className="px-2 mt-2 pt-2 border-t border-gray-800/50">
                                     <button
@@ -672,8 +712,8 @@ export default function DebtPage() {
                                         <td colSpan={8} className="px-6 py-4"><div className="h-12 bg-gray-800/50 rounded-lg" /></td>
                                     </tr>
                                 ))
-                            ) : paginatedCredits.length > 0 ? (
-                                paginatedCredits.map((debt) => {
+                            ) : paginatedDebits.length > 0 ? (
+                                paginatedDebits.map((debt) => {
                                     const status = statusConfig[debt.status];
                                     const StatusIcon = status.icon;
                                     const amount = getDebtAmount(debt);
