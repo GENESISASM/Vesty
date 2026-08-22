@@ -356,17 +356,23 @@ export default function CreditPage() {
                     </div>
                     <div className="bg-gray-900 border border-red-900/30 rounded-xl p-4">
                         <p className="text-red-400 text-xs uppercase tracking-wide mb-1">Unpaid</p>
-                        <p className="text-red-400 text-2xl font-bold">{formatCurrency(summary.totalUnpaid)}</p>
+                        <p className="text-red-400 text-base md:text-xl font-bold truncate" title={formatCurrency(summary.totalUnpaid)}>
+                            {formatCurrency(summary.totalUnpaid)}
+                        </p>
                         <p className="text-gray-500 text-xs mt-0.5">{summary.unpaidCount} creditors</p>
                     </div>
                     <div className="bg-gray-900 border border-yellow-900/30 rounded-xl p-4">
                         <p className="text-yellow-400 text-xs uppercase tracking-wide mb-1">Partial</p>
-                        <p className="text-yellow-400 text-2xl font-bold">{formatCurrency(summary.totalPartial)}</p>
+                        <p className="text-yellow-400 text-base md:text-xl font-bold truncate" title={formatCurrency(summary.totalPartial)}>
+                            {formatCurrency(summary.totalPartial)}
+                        </p>
                         <p className="text-gray-500 text-xs mt-0.5">{summary.partialCount} creditors</p>
                     </div>
                     <div className="bg-gray-900 border border-green-900/30 rounded-xl p-4">
                         <p className="text-green-400 text-xs uppercase tracking-wide mb-1">Paid</p>
-                        <p className="text-green-400 text-2xl font-bold">{formatCurrency(summary.totalPaid)}</p>
+                        <p className="text-green-400 text-base md:text-xl font-bold truncate" title={formatCurrency(summary.totalPaid)}>
+                            {formatCurrency(summary.totalPaid)}
+                        </p>
                         <p className="text-gray-500 text-xs mt-0.5">{summary.paidCount} creditors</p>
                     </div>
                 </div>
