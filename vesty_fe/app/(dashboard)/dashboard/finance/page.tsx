@@ -33,6 +33,98 @@ type SortConfig = {
     direction: 'asc' | 'desc' | null;
 };
 
+const CustomDatePicker = ({
+    selected,
+    onSelect
+}: {
+    selected?: Date;
+    onSelect: (date?: Date) => void;
+}) => {
+    const [view, setView] = useState<'days' | 'months' | 'years'>('days');
+    const [currentMonth, setCurrentMonth] = useState<Date>(selected || new Date());
+    const [yearPage, setYearPage] = useState(currentMonth.getFullYear());
+
+    const handlePrev = (e: React.MouseEvent) => {
+        e.preventDefault(); e.stopPropagation();
+        if (view == 'days') setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+        else if (view == 'months') setCurrentMonth(new Date(currentMonth.getFullYear() - 1, currentMonth.getMonth()));
+        else if (view == 'years') setYearPage(y => y - 12);
+    };
+
+    const handleNext = (e: React.MouseEvent) => {
+        e.preventDefault(); e.stopPropagation();
+        if (view == 'days') setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+        else if (view == 'months') setCurrentMonth(new Date(currentMonth.getFullYear() + 1, currentMonth.getMonth()));
+        else if (view == 'years') setYearPage(y => y + 12);
+    };
+
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const startYear = Math.floor(yearPage / 12) * 12;
+    const YEARS = Array.from({ length: 12 }, (_, i) => startYear + i);
+
+    return (
+        <div className="w-max min-w-75 p-4 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl rdp-dark animate-in fade-in zoom-in-95 duration-200">
+            <style>{`.hide-header .rdp-month_caption, .hide-header .rdp-nav { display: none !important; } .hide-header .rdp-month { margin-top: 0 !important; }`}</style>
+            <div className="flex justify-between items-center mb-4 px-1">
+                <button type="button" onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                    <ChevronLeft size={18} />
+                </button>
+                <div className="flex items-center justify-center grow">
+                    {view == 'days' && (
+                        <div className="flex gap-1.5 text-white font-bold cursor-pointer text-[15px]">
+                            <span onClick={(e) => { e.stopPropagation(); setView('months'); }} className="hover:text-blue-500 transition-colors">
+                                {currentMonth.toLocaleString('en-US', { month: 'long' })}
+                            </span>
+                            <span onClick={(e) => { e.stopPropagation(); setView('years'); setYearPage(currentMonth.getFullYear()); }} className="hover:text-blue-500 transition-colors">
+                                {currentMonth.getFullYear()}
+                            </span>
+                        </div>
+                    )}
+                    {view == 'months' && (
+                        <div className="text-white font-bold cursor-pointer text-[15px] hover:text-blue-500 transition-colors" onClick={(e) => { e.stopPropagation(); setView('years'); setYearPage(currentMonth.getFullYear()); }}>
+                            {currentMonth.getFullYear()}
+                        </div>
+                    )}
+                    {view == 'years' && (
+                        <div className="text-white font-bold text-[15px]">
+                            {YEARS[0]} - {YEARS[11]}
+                        </div>
+                    )}
+                </div>
+                <button type="button" onClick={handleNext} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                    <ChevronRight size={18} />
+                </button>
+
+            </div>
+            {view == 'days' && (
+                <div className="hide-header">
+                    <DayPicker mode="single" selected={selected} onSelect={onSelect} month={currentMonth} onMonthChange={setCurrentMonth} />
+                </div>
+            )}
+            {view == 'months' && (
+                <div className="grid grid-cols-3 gap-2">
+                    {MONTHS.map((m, i) => (
+                        <button key={m} type="button" onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(currentMonth.getFullYear(), i)); setView('days'); }}
+                            className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${currentMonth.getMonth() == i ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                            {m}
+                        </button>
+                    ))}
+                </div>
+            )}
+            {view == 'years' && (
+                <div className="grid grid-cols-3 gap-2">
+                    {YEARS.map(y => (
+                        <button key={y} type="button" onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(y, currentMonth.getMonth())); setView('months'); }}
+                            className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${currentMonth.getFullYear() == y ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                            {y}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function FinancePage() {
     const [finances, setFinances] = useState<Finance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -659,8 +751,11 @@ export default function FinancePage() {
                                     <CalendarDays size={18} className="text-gray-500" />
                                 </button>
                                 {isFormDatePickerOpen && (
-                                    <div className="absolute left-0 bottom-full mb-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-110 p-2 rdp-dark animate-in fade-in zoom-in-95 duration-200">
-                                        <DayPicker mode="single" selected={new Date(form.date)} onSelect={(date) => { if (date) { setForm({ ...form, date: toLocalISO(date) }); setIsFormDatePickerOpen(false); } }} />
+                                    <div className="absolute left-0 bottom-full mb-2 z-110">
+                                        <CustomDatePicker
+                                            selected={form.date ? new Date(form.date) : undefined}
+                                            onSelect={(date) => { if (date) { setForm({ ...form, date: toLocalISO(date) }); setIsFormDatePickerOpen(false); } }}
+                                        />
                                     </div>
                                 )}
                             </div>
