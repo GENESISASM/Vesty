@@ -229,3 +229,36 @@
 .rdp-dark .rdp-range_middle .rdp-day_button {
   border-radius: 0 !important;
 }
+
+.rdp-dark .rdp-month {
+  position: relative !important;
+}
+
+.rdp-dark .rdp-caption,
+.rdp-dark .rdp-month_caption {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin-bottom: 16px !important;
+}
+
+.rdp-dark .rdp-caption_label {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.rdp-dark .rdp-nav {
+  position: absolute !important;
+  top: -2px !important;
+  left: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  pointer-events: none !important;
+}
+
+.rdp-dark .rdp-nav button {
+  pointer-events: auto !important;
+  z-index: 50 !important;
+}

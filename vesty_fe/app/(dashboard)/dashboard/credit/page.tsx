@@ -694,7 +694,7 @@ export default function CreditPage() {
             {/* Add / Edit Credit Modal */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-                    <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                    <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 w-full max-w-lg shadow-2xl relative overflow-visible custom-scrollbar">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-white font-bold text-xl">{editId ? 'Edit Credit' : 'New Credit'}</h3>
                             <button onClick={() => { setShowForm(false); setForm(defaultCreditForm); setFormError(null); setEditId(null); }} className="text-gray-500 hover:text-white">
