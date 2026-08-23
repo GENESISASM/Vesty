@@ -1,28 +1,21 @@
 # Vesty
 
-> **EN:** A full-stack web application for simple joint financial recording and stock management.
->
-> **ID:** Aplikasi web fullstack untuk mencatat keuangan bersama dan manajemen stok barang secara sederhana.
-
+> A full-stack web application for simple joint financial recording and stock management.
 ---
 
 ## Features
 
 ### Finance Management
-- **EN:** Record income & expenses with categories, descriptions, and dates
-- **ID:** Catat pemasukan & pengeluaran dengan kategori, deskripsi, dan tanggal
+- Record income & expenses with categories, descriptions, and dates
 
 ### Stock Management
-- **EN:** Add items, record stock in/out movements, and view full history
-- **ID:** Tambah barang, catat stok masuk/keluar, dan lihat riwayat lengkap
+- Add items, record stock in/out movements, and view full history
 
 ### Dashboard Overview
-- **EN:** Real-time financial summary — total income, expenses, and balance
-- **ID:** Ringkasan keuangan real-time — total pemasukan, pengeluaran, dan saldo
+- Real-time financial summary — total income, expenses, and balance
 
 ### Authentication
-- **EN:** Secure login with JWT — each user only sees their own data
-- **ID:** Login aman dengan JWT — setiap user hanya bisa lihat data miliknya
+- Secure login with JWT — each user only sees their own data
 
 ---
 
