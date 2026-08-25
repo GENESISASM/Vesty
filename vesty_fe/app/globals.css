@@ -262,3 +262,21 @@
   pointer-events: auto !important;
   z-index: 50 !important;
 }
+
+.rdp-dark .hide-header .rdp-caption,
+.rdp-dark .hide-header .rdp-month_caption, 
+.rdp-dark .hide-header .rdp-nav { 
+  display: none !important; 
+}
+
+.rdp-dark .hide-header .rdp-month { 
+  margin-top: 0 !important; 
+}
+
+.rdp-dark .hide-header .rdp-months { 
+  display: flex !important; 
+  flex-direction: row !important; 
+  gap: 2rem !important; 
+  justify-content: center !important; 
+  flex-wrap: nowrap !important; 
+}

@@ -87,7 +87,6 @@ const CustomDatePicker = ({
 
     return (
         <div className="w-max min-w-75 p-4 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl rdp-dark animate-in fade-in zoom-in-95 duration-200">
-            <style>{`.hide-header .rdp-month_caption, .hide-header .rdp-nav { display: none !important; } .hide-header .rdp-month { margin-top: 0 !important; }`}</style>
             <div className="flex justify-between items-center mb-4 px-1">
                 <button type="button" onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
                     <ChevronLeft size={18} />
@@ -144,6 +143,120 @@ const CustomDatePicker = ({
                     ))}
                 </div>
             )}
+        </div>
+    );
+};
+
+const CustomDateRangePicker = ({
+    selected,
+    onSelect,
+    onApply,
+    onReset
+}: {
+    selected?: DateRange;
+    onSelect: (range?: DateRange) => void;
+    onApply: () => void;
+    onReset: () => void;
+}) => {
+    const [view, setView] = useState<'days' | 'months' | 'years'>('days');
+    const [currentMonth, setCurrentMonth] = useState<Date>(selected?.from || new Date());
+    const [yearPage, setYearPage] = useState(currentMonth.getFullYear());
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Mengecek apakah layar HP atau Desktop untuk menampilkan 1 atau 2 bulan
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 640);
+        const handleResize = () => setIsMobile(window.innerWidth < 640);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const handlePrev = (e: React.MouseEvent) => {
+        e.preventDefault(); e.stopPropagation();
+        if (view == 'days') setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+        else if (view == 'months') setCurrentMonth(new Date(currentMonth.getFullYear() - 1, currentMonth.getMonth()));
+        else if (view == 'years') setYearPage(y => y - 12);
+    };
+
+    const handleNext = (e: React.MouseEvent) => {
+        e.preventDefault(); e.stopPropagation();
+        if (view == 'days') setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+        else if (view == 'months') setCurrentMonth(new Date(currentMonth.getFullYear() + 1, currentMonth.getMonth()));
+        else if (view == 'years') setYearPage(y => y + 12);
+    };
+
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const startYear = Math.floor(yearPage / 12) * 12;
+    const YEARS = Array.from({ length: 12 }, (_, i) => startYear + i);
+    const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
+
+    return (
+        <div className={`bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col w-[320px] rdp-dark animate-in fade-in zoom-in-95 transition-all duration-300 ${view == 'days' ? 'sm:w-max sm:min-w-155' : 'sm:w-[320px]'}`}>
+            <div className="p-4 grow">
+                <div className="flex justify-between items-center mb-4 px-1">
+                    <button type="button" onClick={handlePrev} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                        <ChevronLeft size={18} />
+                    </button>
+                    <div className="flex items-center justify-center grow gap-8 sm:gap-32">
+                        {view == 'days' && (
+                            <>
+                                <div className="text-white font-bold cursor-pointer text-[15px] hover:text-blue-500 transition-colors" onClick={() => setView('months')}>
+                                    {currentMonth.toLocaleString('en-US', { month: 'long' })} {currentMonth.getFullYear()}
+                                </div>
+                                {!isMobile && (
+                                    <div className="text-white font-bold cursor-pointer text-[15px] hover:text-blue-500 transition-colors" onClick={() => { setView('months'); setCurrentMonth(nextMonth); }}>
+                                        {nextMonth.toLocaleString('en-US', { month: 'long' })} {nextMonth.getFullYear()}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {view == 'months' && (
+                            <div className="text-white font-bold cursor-pointer text-[15px] hover:text-blue-500 transition-colors" onClick={() => setView('years')}>
+                                {currentMonth.getFullYear()}
+                            </div>
+                        )}
+                        {view == 'years' && (
+                            <div className="text-white font-bold text-[15px]">
+                                {YEARS[0]} - {YEARS[11]}
+                            </div>
+                        )}
+                    </div>
+                    <button type="button" onClick={handleNext} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                        <ChevronRight size={18} />
+                    </button>
+                </div>
+                {view == 'days' && (
+                    <div className="hide-header flex justify-center">
+                        <DayPicker mode="range" selected={selected} onSelect={onSelect} month={currentMonth} onMonthChange={setCurrentMonth} numberOfMonths={isMobile ? 1 : 2} showOutsideDays={false} />
+                    </div>
+                )}
+                {view == 'months' && (
+                    <div className="grid grid-cols-3 gap-2 max-w-70 mx-auto py-8">
+                        {MONTHS.map((m, i) => (
+                            <button key={m} type="button" onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(currentMonth.getFullYear(), i)); setView('days'); }}
+                                className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${currentMonth.getMonth() == i ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                                {m}
+                            </button>
+                        ))}
+                    </div>
+                )}
+                {view == 'years' && (
+                    <div className="grid grid-cols-3 gap-2 max-w-70 mx-auto py-8">
+                        {YEARS.map(y => (
+                            <button key={y} type="button" onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(y, currentMonth.getMonth())); setView('months'); }}
+                                className={`py-2.5 rounded-xl text-sm font-medium transition-colors ${currentMonth.getFullYear() == y ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                                {y}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
+                <div className="flex gap-2 ml-auto">
+                    <button onClick={onReset} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 rounded-lg">Reset</button>
+                    <button onClick={onApply} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors">Apply</button>
+                </div>
+            </div>
         </div>
     );
 };
@@ -472,7 +585,6 @@ export default function CreditPage() {
 
             {/* Header Controls */}
             <div className="flex items-center mb-6 gap-2">
-
                 {/* Search */}
                 <div className="relative grow min-w-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
@@ -489,30 +601,20 @@ export default function CreditPage() {
                 <div className="relative shrink-0" ref={dropdownRef}>
                     <button
                         onClick={() => { setTempRange(dateRange); setIsFilterOpen(!isFilterOpen); }}
-                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'
-                            }`}
+                        className={`flex items-center justify-center gap-2 px-3 py-2.5 border text-sm font-medium rounded-xl transition ${isFilterOpen ? 'bg-gray-800 border-blue-500 text-white' : 'bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800'}`}
                     >
                         <CalendarDays size={18} className="text-gray-400" />
                         <span className="hidden md:inline">{dateRange?.from && dateRange?.to ? `${formatDate(dateRange.from)} – ${formatDate(dateRange.to)}` : 'Date'}</span>
                     </button>
 
                     {isFilterOpen && (
-                        <div className="absolute left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden w-[90vw] sm:w-max">
-                            <div className="p-2.5 rdp-dark flex justify-center">
-                                <DayPicker
-                                    mode="range"
-                                    selected={tempRange}
-                                    onSelect={setTempRange}
-                                    numberOfMonths={window.innerWidth < 640 ? 1 : 2}
-                                    showOutsideDays={false}
-                                />
-                            </div>
-                            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/80">
-                                <div className="flex gap-2 ml-auto">
-                                    <button onClick={() => { setTempRange(undefined); setDateRange(undefined); setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-800 rounded-lg">Reset</button>
-                                    <button onClick={() => { if (tempRange?.from && tempRange?.to) { setDateRange(tempRange); } setIsFilterOpen(false); }} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg">Apply</button>
-                                </div>
-                            </div>
+                        <div className="absolute left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 mt-2 z-50">
+                            <CustomDateRangePicker
+                                selected={tempRange}
+                                onSelect={setTempRange}
+                                onReset={() => { setTempRange(undefined); setDateRange(undefined); setIsFilterOpen(false); }}
+                                onApply={() => { if (tempRange?.from && tempRange?.to) { setDateRange(tempRange); } setIsFilterOpen(false); }}
+                            />
                         </div>
                     )}
                 </div>
