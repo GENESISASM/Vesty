@@ -148,7 +148,7 @@ export default function FinancePage() {
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
     const [isOtherCategory, setIsOtherCategory] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
     const [meta, setMeta] = useState({ total_pages: 1, total_data: 0 });
 
     const formDateRef = useRef<HTMLDivElement>(null);
