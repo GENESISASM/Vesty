@@ -25,7 +25,7 @@ export class FinanceService {
         return finance
     }
 
-    async getAllFinances(userId: string, page: number = 1, limit: number = 50) {
+    async getAllFinances(userId: string, page: number = 1, limit: number = 100) {
         const skip = (page - 1) * limit;
         const [data, total] = await Promise.all([
             prisma.finance.findMany({
