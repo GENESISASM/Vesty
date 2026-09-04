@@ -135,6 +135,7 @@ export default function FinancePage() {
     const [error, setError] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [tempRange, setTempRange] = useState<DateRange | undefined>(undefined);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -150,20 +151,37 @@ export default function FinancePage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(100);
     const [meta, setMeta] = useState({ total_pages: 1, total_data: 0 });
+    const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
 
     const formDateRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const multiFilterRef = useRef<HTMLDivElement>(null);
 
-    const dynamicCategories = useMemo(() => {
-        const categoriesFromDB = finances.map(f => f.category).filter(Boolean);
-        return Array.from(new Set(categoriesFromDB)).sort();
-    }, [finances]);
-
     const fetchFinances = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await axiosInstance.get(`/finance/list?page=${currentPage}&limit=${itemsPerPage}`);
+            const params = new URLSearchParams({
+                page: currentPage.toString(),
+                limit: itemsPerPage.toString()
+            });
+
+            if (searchQuery) params.append('search', debouncedSearchQuery);
+            if (activeFilters.types.length) params.append('types', activeFilters.types.join(','));
+            if (activeFilters.categories.length) params.append('categories', activeFilters.categories.join(','));
+
+            if (dateRange?.from && dateRange?.to) {
+                const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
+                const end = new Date(dateRange.to); end.setHours(23, 59, 59, 999);
+                params.append('startDate', start.toISOString());
+                params.append('endDate', end.toISOString());
+            }
+
+            if (sortConfig.key && sortConfig.direction) {
+                params.append('sortKey', sortConfig.key);
+                params.append('sortDir', sortConfig.direction);
+            }
+
+            const res = await axiosInstance.get(`/finance/list?${params.toString()}`);
 
             setFinances(res.data.data.data);
             setMeta({
@@ -175,9 +193,29 @@ export default function FinancePage() {
         } finally {
             setIsLoading(false);
         }
-    }, [currentPage, itemsPerPage]);
+    }, [currentPage, itemsPerPage, debouncedSearchQuery, activeFilters, dateRange, sortConfig]);
 
     useEffect(() => { fetchFinances(); }, [fetchFinances]);
+
+    const fetchCategories = useCallback(async () => {
+        try {
+            const res = await axiosInstance.get('/finance/categories');
+            setDynamicCategories(res.data.data);
+        } catch (err) {
+            console.error('Failed to fetch categories', err);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -236,36 +274,7 @@ export default function FinancePage() {
         });
     };
 
-    const processedFinances = useMemo(() => {
-        let result = finances.filter(f => {
-            const query = searchQuery.toLowerCase();
-            const matchesSearch = [f.type, f.category, f.description].some(field => field?.toLowerCase().includes(query))
-            const matchesType = activeFilters.types.length == 0 || activeFilters.types.includes(f.type);
-            const matchesCategory = activeFilters.categories.length == 0 || activeFilters.categories.includes(f.category);
-
-            if (!dateRange?.from || !dateRange?.to) return matchesSearch && matchesType && matchesCategory;
-
-            const fDate = new Date(f.date);
-            const start = new Date(dateRange.from); start.setHours(0, 0, 0, 0);
-            const end = new Date(dateRange.to); end.setHours(23, 59, 59, 999);
-            return matchesSearch && matchesType && matchesCategory && (fDate >= start && fDate <= end);
-        });
-
-        if (sortConfig.key && sortConfig.direction) {
-            result = [...result].sort((a, b) => {
-                let aValue: any = a[sortConfig.key as keyof Finance] || '';
-                let bValue: any = b[sortConfig.key as keyof Finance] || '';
-                if (sortConfig.key == 'amount_num') {
-                    aValue = Number(a.amount);
-                    bValue = Number(b.amount);
-                }
-                if (aValue < bValue) return sortConfig.direction == 'asc' ? -1 : 1;
-                if (aValue > bValue) return sortConfig.direction == 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
-        return result;
-    }, [finances, searchQuery, dateRange, sortConfig, activeFilters]);
+    const processedFinances = finances;
 
     useEffect(() => {
         setCurrentPage(1);
@@ -311,6 +320,7 @@ export default function FinancePage() {
             setIsOtherCategory(false);
             handleCancel();
             fetchFinances();
+            fetchCategories();
         } catch (err: any) {
             setError(err.response?.data?.message || 'Something went wrong');
         } finally {
@@ -336,6 +346,7 @@ export default function FinancePage() {
         try {
             await axiosInstance.delete(`/finance/delete/${id}`);
             fetchFinances();
+            fetchCategories();
         } catch (err) { console.error(err); }
         finally { setDeleteId(null); }
     };

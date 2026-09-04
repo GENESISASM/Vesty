@@ -18,11 +18,34 @@ export class FinanceController {
   static async getAllFinances(req: AuthRequest, res: Response) {
     try {
       const userId = req.user!.id;
-
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const result = await FinanceService.getService().getAllFinances(userId, page, limit);
+      const limit = parseInt(req.query.limit as string) || 100;
 
+      const filters = {
+        search: req.query.search as string,
+        types: req.query.types as string,
+        categories: req.query.categories as string,
+        startDate: req.query.startDate as string,
+        endDate: req.query.endDate as string,
+      };
+
+      const sort = {
+        key: req.query.sortKey as string,
+        direction: req.query.sortDir as string
+      };
+
+      const result = await FinanceService.getService().getAllFinances(userId, page, limit, filters, sort);
+
+      return res.status(200).json(responseBuilder(true, '200', result));
+    } catch (err: any) {
+      return res.status(400).json(responseBuilder(false, err.code ?? '400', null, err.message));
+    }
+  }
+
+  static async getCategories(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const result = await FinanceService.getService().getUniqueCategories(userId);
       return res.status(200).json(responseBuilder(true, '200', result));
     } catch (err: any) {
       return res.status(400).json(responseBuilder(false, err.code ?? '400', null, err.message));
@@ -77,7 +100,7 @@ export class FinanceController {
     try {
       const userId = req.user!.id;
       const result = await FinanceService.getService().getAllForDashboard(userId);
-      
+
       return res.status(200).json(responseBuilder(true, '200', result));
     } catch (err: any) {
       return res.status(400).json(responseBuilder(false, err.code ?? '400', null, err.message));

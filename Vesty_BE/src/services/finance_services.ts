@@ -25,17 +25,52 @@ export class FinanceService {
         return finance
     }
 
-    async getAllFinances(userId: string, page: number = 1, limit: number = 100) {
+    async getAllFinances(
+        userId: string,
+        page: number = 1,
+        limit: number = 100,
+        filters: any = {},
+        sort: any = {}
+    ) {
         const skip = (page - 1) * limit;
+        let where: any = { user_id: userId };
+        if (filters.search) {
+            where.OR = [
+                { type: { contains: filters.search, mode: 'insensitive' } },
+                { category: { contains: filters.search, mode: 'insensitive' } },
+                { description: { contains: filters.search, mode: 'insensitive' } },
+            ];
+        }
+
+        if (filters.types && filters.types.length > 0) {
+            where.type = { in: filters.types.split(',') };
+        }
+        if (filters.categories && filters.categories.length > 0) {
+            where.category = { in: filters.categories.split(',') };
+        }
+
+        if (filters.startDate || filters.endDate) {
+            where.date = {};
+            if (filters.startDate) where.date.gte = new Date(filters.startDate);
+            if (filters.endDate) where.date.lte = new Date(filters.endDate);
+        }
+
+        let orderBy: any = { date: 'desc' };
+        if (sort.key && sort.direction) {
+            let sortKey = sort.key == 'amount_num' ? 'amount' : sort.key;
+            orderBy = { [sortKey]: sort.direction };
+        }
+
         const [data, total] = await Promise.all([
             prisma.finance.findMany({
-                where: { user_id: userId },
-                orderBy: { date: 'desc' },
+                where,
+                orderBy,
                 skip: skip,
                 take: limit,
             }),
-            prisma.finance.count({ where: { user_id: userId } })
+            prisma.finance.count({ where })
         ]);
+
         return {
             data: data,
             meta: {
@@ -45,6 +80,16 @@ export class FinanceService {
                 limit: limit
             }
         };
+    }
+
+    async getUniqueCategories(userId: string) {
+        const categories = await prisma.finance.findMany({
+            where: { user_id: userId },
+            select: { category: true },
+            distinct: ['category'],
+        });
+
+        return categories.map(c => c.category).filter(Boolean).sort();
     }
 
     async getFinanceById(userId: string, id: string) {
@@ -115,7 +160,7 @@ export class FinanceService {
     async getAllForDashboard(userId: string) {
         const today = new Date();
         const twelveMonthsAgo = new Date();
-        
+
         twelveMonthsAgo.setMonth(today.getMonth() - 12);
         return await prisma.finance.findMany({
             where: {
